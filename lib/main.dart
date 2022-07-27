@@ -15,12 +15,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: const ColorScheme.light()
-            .copyWith(primary: Colors.blue, secondary: Colors.lightBlueAccent),
+        colorScheme: const ColorScheme.light().copyWith(primary: Colors.blue, secondary: Colors.lightBlueAccent),
       ),
       darkTheme: ThemeData(
-          colorScheme: const ColorScheme.dark().copyWith(
-              primary: Colors.blue, secondary: Colors.lightBlueAccent),
+          colorScheme: const ColorScheme.dark().copyWith(primary: Colors.blue, secondary: Colors.lightBlueAccent),
           appBarTheme: const AppBarTheme(
             color: Colors.blue,
           )),
@@ -29,4 +27,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

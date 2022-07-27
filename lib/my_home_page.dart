@@ -158,8 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _pullRefresh() async {
     setState(() {
       for (int i = 0; i < apps.length; i++) {
-        apps[i].checkUpdates();
-        print(apps[i].update);
+        apps[i] = App(apps[i].url); //TODO: I find this very cursed, but in my hours of despair I couldn't find a better way to do this. Please help.
       }
     });
   }
@@ -199,6 +198,7 @@ class _MyHomePageState extends State<MyHomePage> {
             return ListTile(
               title: apps[index],
               onLongPress: () => _onLongPress(index),
+              // onTap: () => apps[index].checkUpdates(),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             );
           },

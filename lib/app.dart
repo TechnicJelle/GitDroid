@@ -19,13 +19,24 @@ class App extends StatefulWidget {
 
   @override
   State createState() => _AppState();
-
-  bool get update => _AppState().update;
-  get checkUpdates => _AppState().checkUpdates;
 }
 
 class _AppState extends State<App> {
   bool update = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkUpdates();
+    // print("initState");
+  }
+
+  @override
+  void didUpdateWidget(App oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    checkUpdates();
+    // print("didUpdateWidget");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +71,9 @@ class _AppState extends State<App> {
   }
 
   void checkUpdates() {
-    update = Random().nextBool();
-    update = true;
-    print("Checking updates...");
+    setState(() {
+      update = Random().nextBool();
+      print(update);
+    });
   }
 }
