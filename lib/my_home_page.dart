@@ -21,7 +21,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String thisAppName = "Application";
-  List<App> apps = [];
+  List<RepoData> repos = [];
 
   @override
   void initState() {
@@ -37,8 +37,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _addListItem() {
-    TextEditingController textEditingController = TextEditingController();
-    String text = "";
+    TextEditingController textEditingController = TextEditingController(); //TODO: Integrate this better into the rest of this function
+    String text = ""; //TODO: Probably don't need this with the TextEditingController
     bool valid = true;
     Key key = UniqueKey();
 
@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       setState(() {
-        apps.add(App(text));
+        repos.add(RepoData(Uri.parse(text))); //TODO: Catch error
       });
       Navigator.of(context).pop();
     }
@@ -129,7 +129,10 @@ class _MyHomePageState extends State<MyHomePage> {
             text: TextSpan(
               children: <TextSpan>[
                 const TextSpan(text: "Are you sure you want to stop checking for updates for "),
-                TextSpan(text: "${apps[index].name}?\n\n${apps[index].url}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(
+                  text: "${repos[index].name}?\n\n${repos[index].url}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
@@ -144,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Text("Delete"),
               onPressed: () {
                 setState(() {
-                  apps.removeAt(index);
+                  repos.removeAt(index);
                 });
                 Navigator.of(context).pop();
               },
@@ -157,8 +160,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _pullRefresh() async {
     setState(() {
-      for (int i = 0; i < apps.length; i++) {
-        apps[i] = App(apps[i].url); //TODO: I find this very cursed, but in my hours of despair I couldn't find a better way to do this. Please help.
+      for (int i = 0; i < repos.length; i++) {
+        repos[i].checkUpdate();
       }
     });
   }
@@ -183,25 +186,14 @@ class _MyHomePageState extends State<MyHomePage> {
       ), // This trailing comma makes auto-formatting nicer for build methods.
       body: RefreshIndicator(
         onRefresh: _pullRefresh,
-        child: ListView.builder(
-          itemCount: apps.length * 2,
-          itemBuilder: (context, i) {
-            //if i is odd, there's a divider with no padding
-            if (i.isOdd) {
-              return const Divider(
-                height: 0,
-              );
-            }
-
-            final index = i ~/ 2;
-
-            return ListTile(
-              title: apps[index],
-              onLongPress: () => _onLongPress(index),
-              // onTap: () => apps[index].checkUpdates(),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            );
-          },
+        child: ListView.separated(
+          itemCount: repos.length,
+          separatorBuilder: (context, index) => const Divider(height: 0),
+          itemBuilder: (context, index) => ListTile(
+            title: RepoItem(data: repos[index]),
+            onLongPress: () => _onLongPress(index),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
         ),
       ),
     );

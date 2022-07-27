@@ -3,41 +3,45 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gitdroid/stack_overflow_snippets.dart';
 
-class App extends StatefulWidget {
-  const App(this.url, {super.key});
+class RepoData {
+  final Uri url;
+  String name;
+  String description;
+  bool update;
 
-  final String url;
-  //TODO: Improve pretty name from url extraction
-  String get name => url
-          .split('/') //splice url on the slashes
-          .last //gets the repo name by getting the last part
-          .replaceAll(RegExp(r'[-_]'), ' ') //replaces all - and _ in name with spaces
-          .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) /* finds camelCase/PascalCase... */ {
-        return "${match.group(1)} ${match.group(2)}"; //...and puts a space in between
-      }).toTitleCase() //capitalizes every word
-      ;
+  RepoData(this.url)
+      :
+        //TODO: Improve pretty name from url extraction
+        name = url
+            .toString()
+            .split('/') //splice url on the slashes
+            .last //gets the repo name by getting the last part
+            .replaceAll(RegExp(r'[-_]'), ' ') //replaces all - and _ in name with spaces
+            .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) /* finds camelCase/PascalCase... */ {
+          return "${match.group(1)} ${match.group(2)}"; //...and puts a space in between
+        }).toTitleCase() //capitalizes every word
+        ,
+        description = "",
+        update = Random().nextBool();
 
-  @override
-  State createState() => _AppState();
+  void checkUpdate() {
+    update = Random().nextBool();
+  }
 }
 
-class _AppState extends State<App> {
-  bool update = false;
+class RepoItem extends StatefulWidget {
+  const RepoItem({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
+
+  final RepoData data;
 
   @override
-  void initState() {
-    super.initState();
-    checkUpdates();
-    // print("initState");
-  }
+  State createState() => _RepoItemState();
+}
 
-  @override
-  void didUpdateWidget(App oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    checkUpdates();
-    // print("didUpdateWidget");
-  }
-
+class _RepoItemState extends State<RepoItem> {
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -47,20 +51,20 @@ class _AppState extends State<App> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.name,
+              widget.data.name,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
             const SizedBox(
               height: 4,
             ),
             Text(
-              widget.url,
+              widget.data.url.toString(),
               style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
             )
           ],
         ),
         const Spacer(),
-        update
+        widget.data.update
             ? const Text(
                 "v0.0.1 → v0.0.2",
                 style: TextStyle(color: Colors.green),
@@ -68,12 +72,5 @@ class _AppState extends State<App> {
             : const Text("v0.0.1")
       ],
     );
-  }
-
-  void checkUpdates() {
-    setState(() {
-      update = Random().nextBool();
-      print(update);
-    });
   }
 }
