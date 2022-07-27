@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/gitdroid/gitdroid.iml" filepath="$PROJECT_DIR$/gitdroid/gitdroid.iml" />
-      <module fileurl="file://$PROJECT_DIR$/gitdroid/android/gitdroid_android.iml" filepath="$PROJECT_DIR$/gitdroid/android/gitdroid_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/GitDroid.iml" filepath="$PROJECT_DIR$/.idea/GitDroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/gitdroid_android.iml" filepath="$PROJECT_DIR$/android/gitdroid_android.iml" />
     </modules>
   </component>
 </project>
