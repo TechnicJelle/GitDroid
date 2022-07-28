@@ -10,14 +10,17 @@ class RepoData {
   String description;
   bool updateAvailable;
   bool expanded = false;
+  Uri iconUrl;
 
   RepoData(this.ownerName, this.repoName)
       : url = Uri.https('github.com', '/$ownerName/$repoName'),
         prettyName = repoName //TODO: Improve pretty name from url extraction
             .replaceAll(RegExp(r'[-_]'), ' ') //replace underscores and dashes with spaces
         ,
-        updateAvailable = Random().nextBool(),
-        description = "This is a description of the repo";
+        updateAvailable = Random().nextBool(), //TODO: Calculate update availability using most recent GitHub release version
+        description = "This is a description of the repo",
+        iconUrl = Uri.https("avatars.githubusercontent.com", "/u/22576047", {'v': "4"}) //TODO: Get from API
+  ;
 
   void checkUpdate() {
     updateAvailable = Random().nextBool();
@@ -72,6 +75,15 @@ class _RepoItemState extends State<RepoItem> {
         widget.data.expanded //
             ? const Icon(Icons.arrow_drop_down)
             : const Icon(Icons.arrow_drop_up),
+        CircleAvatar(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: Image.network(
+              widget.data.iconUrl.toString(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
         Expanded(
           child: DefaultTextStyle(
             style: TextStyle(

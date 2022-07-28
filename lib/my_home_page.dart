@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gitdroid/app.dart';
+import 'package:gitdroid/repo.dart';
 import 'package:gitdroid/stack_overflow_snippets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
