@@ -27,6 +27,15 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     setAppName();
+
+    //TODO: Load repos from app data
+
+    if (repos.isEmpty) {
+      //TODO: Make this only happen once, on first launch
+      setState(() {
+        repos.add(RepoData("TechnicJelle", "GitDroid"));
+      });
+    }
   }
 
   void setAppName() async {

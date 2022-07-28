@@ -80,6 +80,13 @@ class _RepoItemState extends State<RepoItem> {
             borderRadius: BorderRadius.circular(5),
             child: Image.network(
               widget.data.iconUrl.toString(),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const CircularProgressIndicator();
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return const Image(image: AssetImage("assets/github.png"));
+              },
             ),
           ),
         ),
