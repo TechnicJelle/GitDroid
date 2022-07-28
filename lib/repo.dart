@@ -38,19 +38,15 @@ class RepoData {
     }
 
     List<String> parts = url.split("/"); //split test string on forward slashes
-    print(parts);
     int githubIndex = parts.indexWhere((part) => part.contains("github.com")); //find the index of the part that contains github.com
-    print(githubIndex);
     if (githubIndex == -1) return []; //if github.com is not found, the url is not valid
     parts.removeRange(0, githubIndex); //remove all the parts before github.com, we don't care about those
-    print(parts);
     if (parts.length <= 2) return []; //if there are more than 2 parts, the url is not yet valid
     String ownerName = parts[1]; //get the owner name from the url
     if (ownerName.isEmpty || ownerName.length > 40) return []; //if the owner name is empty or too long, the url is not valid
     String repoName = parts[2]; //get the repo name from the url
     if (repoName.isEmpty || repoName.length > 100) return []; //if the repo name is empty or too long, the url is not valid
 
-    print("$ownerName/$repoName");
     return [ownerName, repoName]; //return true and ownerName and repoName
   }
 }
