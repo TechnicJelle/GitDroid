@@ -3,27 +3,38 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class RepoData {
+  //Inputs
   final String ownerName;
   final String repoName;
+
+  //Calculated in constructor
   Uri url;
   String prettyName;
+
+  //Updated
+  Uri iconUrl;
   String description;
   bool updateAvailable;
+
+  //UI State
   bool expanded = false;
-  Uri iconUrl;
 
   RepoData(this.ownerName, this.repoName)
-      : url = Uri.https('github.com', '/$ownerName/$repoName'),
-        prettyName = repoName //TODO: Improve pretty name from url extraction
+      : url = Uri(scheme: "https", host: "github.com", pathSegments: [ownerName, repoName]),
+        prettyName = repoName //TODO (low-prio): Improve pretty name from url extraction
             .replaceAll(RegExp(r'[-_]'), ' ') //replace underscores and dashes with spaces
-        ,
-        updateAvailable = Random().nextBool(), //TODO: Calculate update availability using most recent GitHub release version
-        description = "This is a description of the repo",
-        iconUrl = Uri.https("avatars.githubusercontent.com", "/u/22576047", {'v': "4"}) //TODO: Get from API
-  ;
+            .replaceAll(RegExp(r'\s+'), ' ') //remove multiple spaces
+            .trim(), //trim whitespace
+        description = "",
+        updateAvailable = false,
+        iconUrl = Uri() {
+    checkUpdate();
+  }
 
   void checkUpdate() {
-    updateAvailable = Random().nextBool();
+    iconUrl = Uri.https("avatars.githubusercontent.com", "/u/22576047", {'v': "4"}); //TODO: Get from API
+    description = "This is a description of the repo"; //TODO Get from API
+    updateAvailable = Random().nextBool(); //TODO: Calculate update availability using most recent GitHub release version
   }
 
   void expand() {
@@ -31,6 +42,7 @@ class RepoData {
   }
 
   static List<String> extractUserAndRepo(String url) {
+    url = url.trim(); //ignore whitespace before and after
     if (url.contains(" ")) return []; //if the url contains a space, it's not a valid url
 
     //Check if the url is a valid url
@@ -126,9 +138,11 @@ class _RepoItemState extends State<RepoItem> {
         ),
         const SizedBox(width: 16),
         widget.data.updateAvailable
-            ? const Text(
-                "v0.0.1 → v0.0.2",
-                style: TextStyle(color: Colors.green),
+            ? ElevatedButton(
+                style: TextButton.styleFrom(backgroundColor: Colors.green),
+                onPressed: () {},
+                onLongPress: () {},
+                child: const Text("v0.0.1 ➔ v0.0.2"),
               )
             : const Text("v0.0.1"),
       ],
