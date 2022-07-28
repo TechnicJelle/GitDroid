@@ -1,4 +1,4 @@
-import "package:flutter/material.dart";
+import 'package:flutter/material.dart';
 
 //From https://stackoverflow.com/a/62212730/8109619
 @immutable
@@ -32,10 +32,4 @@ class ShakeWidget extends StatelessWidget {
       child: child,
     );
   }
-}
-
-//From https://stackoverflow.com/a/29629114/8109619
-extension StringCasingExtension on String {
-  String toCapitalized() => length > 0 ? '${this[0].toUpperCase()}${substring(1).toLowerCase()}' : '';
-  String toTitleCase() => replaceAll(RegExp(' +'), ' ').split(' ').map((str) => str.toCapitalized()).join(' ');
 }

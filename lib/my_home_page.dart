@@ -1,7 +1,7 @@
-import "package:flutter/material.dart";
-import "package:gitdroid/app.dart";
+import 'package:flutter/material.dart';
+import 'package:gitdroid/app.dart';
 import 'package:gitdroid/stack_overflow_snippets.dart';
-import "package:package_info_plus/package_info_plus.dart";
+import 'package:package_info_plus/package_info_plus.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -37,24 +37,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _addListItem() {
-    TextEditingController textEditingController = TextEditingController(); //TODO: Integrate this better into the rest of this function
-    String text = ""; //TODO: Probably don't need this with the TextEditingController
-    bool valid = true;
-    Key key = UniqueKey();
+    TextEditingController textEditingController = TextEditingController();
+    bool valid = true; //starts off being valid, to not immediately show the red warning
+    Key key = UniqueKey(); //create a unique key for the text field (used by the shaker)
+
+    bool validate(List<String> parts) {
+      if (parts.length != 2) return false;
+      return true;
+    }
 
     void add(StateSetter setDialogState) {
-      if (text == "") valid = false;
+      if (textEditingController.text == "") valid = false; //when the user presses Enter with no text, the dialog is not valid
+      List<String> input = RepoData.extractUserAndRepo(textEditingController.text); //
+      valid = validate(input); //validate the url one more time, just to be 100% sure
 
       if (!valid) {
         setDialogState(() {
-          key = UniqueKey();
-          textEditingController.text = text;
+          key = UniqueKey(); //make the text field shake
         });
         return;
       }
 
       setState(() {
-        repos.add(RepoData(Uri.parse(text))); //TODO: Catch error
+        repos.add(RepoData(input[0], input[1]));
       });
       Navigator.of(context).pop();
     }
@@ -76,10 +81,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     controller: textEditingController,
                     style: const TextStyle(fontSize: 18),
                     onChanged: (value) {
-                      text = value;
                       setDialogState(() {
-                        //TODO: Improve url validation
-                        valid = text.contains("github.com/");
+                        valid = validate(RepoData.extractUserAndRepo(value));
                       });
                     },
                     onEditingComplete: () {
@@ -127,12 +130,11 @@ class _MyHomePageState extends State<MyHomePage> {
           // content: Text("Are you sure you want to delete") + Text("${apps[index]}?"),
           content: RichText(
             text: TextSpan(
+              style: const TextStyle(fontSize: 18),
               children: <TextSpan>[
                 const TextSpan(text: "Are you sure you want to stop checking for updates for "),
-                TextSpan(
-                  text: "${repos[index].name}?\n\n${repos[index].url}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                TextSpan(text: "${repos[index].prettyName}?", style: const TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: "\n\n${repos[index].url}", style: const TextStyle(fontStyle: FontStyle.italic)),
               ],
             ),
           ),
@@ -160,9 +162,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _pullRefresh() async {
     setState(() {
-      for (int i = 0; i < repos.length; i++) {
-        repos[i].checkUpdate();
+      for (RepoData repo in repos) {
+        repo.checkUpdate();
       }
+
+      //sort the repos with the updates at the top (sort alphabetically for the rest)
+      repos.sort((RepoData a, RepoData b) {
+        if (a.updateAvailable && !b.updateAvailable) return -1;
+        if (!a.updateAvailable && b.updateAvailable) return 1;
+        return a.prettyName.compareTo(b.prettyName);
+      });
     });
   }
 
@@ -191,6 +200,9 @@ class _MyHomePageState extends State<MyHomePage> {
           separatorBuilder: (context, index) => const Divider(height: 0),
           itemBuilder: (context, index) => ListTile(
             title: RepoItem(data: repos[index]),
+            onTap: () => setState(() {
+              repos[index].expand();
+            }),
             onLongPress: () => _onLongPress(index),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
