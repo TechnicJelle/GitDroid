@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:intl/intl.dart';
 
 class RepoData {
   //Inputs
@@ -16,6 +20,10 @@ class RepoData {
   String description;
   bool updateAvailable;
 
+  String releaseMarkdown;
+  int releaseApkAssetCount;
+  List<String> releaseApkAssets;
+
   //UI State
   bool expanded = false;
 
@@ -27,14 +35,41 @@ class RepoData {
             .trim(), //trim whitespace
         description = "",
         updateAvailable = false,
-        iconUrl = Uri() {
+        iconUrl = Uri(),
+        releaseMarkdown = "Loading...",
+        releaseApkAssetCount = 0,
+        releaseApkAssets = [] {
     checkUpdate();
   }
 
   void checkUpdate() {
-    iconUrl = Uri.https("avatars.githubusercontent.com", "/u/22576047", {'v': "4"}); //TODO: Get from API
-    description = "This is a description of the repo"; //TODO Get from API
-    updateAvailable = Random().nextBool(); //TODO: Calculate update availability using most recent GitHub release version
+    //TODO: Get all of this information from the GitHub API
+    iconUrl = Uri.https("avatars.githubusercontent.com", "/u/22576047", {'v': "4"});
+    description = "This is a description of the repo";
+    updateAvailable = Random().nextBool();
+
+    if (updateAvailable) {
+      // Release Markdown -->
+      set(inp) {
+        releaseMarkdown = inp;
+      }
+
+      HttpClient()
+          .getUrl(Uri.parse("https://raw.githubusercontent.com/TechnicJelle/GitDroid/main/README.md"))
+          // .getUrl(Uri.parse("https://raw.githubusercontent.com/TechnicJelle/TechnicJelle/main/README.md"))
+          .then((HttpClientRequest request) => request.close())
+          .then((HttpClientResponse response) => response.transform(const Utf8Decoder()).listen(set));
+      // <-- Release Markdown
+
+      // Apk Assets -->
+      releaseApkAssetCount = Random().nextInt(3) + 0;
+
+      releaseApkAssets.clear();
+      for (int i = 0; i < releaseApkAssetCount; i++) {
+        releaseApkAssets.add("app.apk");
+      }
+      // <-- Apk Assets
+    }
   }
 
   void expand() {
@@ -79,6 +114,70 @@ class RepoItem extends StatefulWidget {
 }
 
 class _RepoItemState extends State<RepoItem> {
+  void _showRelease() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).backgroundColor.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Flexible(
+                    child: SingleChildScrollView(
+                      child: MarkdownBody(
+                        data: widget.data.releaseMarkdown,
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(),
+                const Text("Downloads", style: TextStyle(fontSize: 24)),
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.data.releaseApkAssetCount,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(widget.data.releaseApkAssets[index]),
+                      trailing: Opacity(
+                        opacity: 0.7,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(NumberFormat.compact().format(Random().nextInt(10000))),
+                            const Icon(Icons.file_download),
+                          ],
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -106,6 +205,7 @@ class _RepoItemState extends State<RepoItem> {
         Expanded(
           child: DefaultTextStyle(
             style: TextStyle(
+              color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
               overflow: widget.data.expanded ? TextOverflow.visible : TextOverflow.fade,
             ),
             softWrap: widget.data.expanded,
@@ -140,8 +240,8 @@ class _RepoItemState extends State<RepoItem> {
         widget.data.updateAvailable
             ? ElevatedButton(
                 style: TextButton.styleFrom(backgroundColor: Colors.green),
-                onPressed: () {},
-                onLongPress: () {},
+                onPressed: _showRelease,
+                onLongPress: () {}, //just here so it doesn't pop the delete dialog when the button is long pressed
                 child: const Text("v0.0.1 ➔ v0.0.2"),
               )
             : const Text("v0.0.1"),
