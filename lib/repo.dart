@@ -2,9 +2,21 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:url_launcher/url_launcher.dart';
+
+class ReleaseAsset {
+  final String name;
+  final int size;
+  final int downloadCount;
+  final String browserDownloadUrl;
+
+  ReleaseAsset({required this.name, required this.size, required this.downloadCount, required this.browserDownloadUrl});
+}
 
 class RepoData {
   //Inputs
@@ -22,7 +34,7 @@ class RepoData {
 
   String releaseMarkdown;
   int releaseApkAssetCount;
-  List<String> releaseApkAssets;
+  List<ReleaseAsset> releaseApkAssets;
 
   //UI State
   bool expanded = false;
@@ -50,13 +62,17 @@ class RepoData {
 
     if (updateAvailable) {
       // Release Markdown -->
+      releaseMarkdown = "";
       set(inp) {
-        releaseMarkdown = inp;
+        releaseMarkdown += inp;
       }
 
       HttpClient()
-          .getUrl(Uri.parse("https://raw.githubusercontent.com/TechnicJelle/GitDroid/main/README.md"))
-          // .getUrl(Uri.parse("https://raw.githubusercontent.com/TechnicJelle/TechnicJelle/main/README.md"))
+          // .getUrl(Uri.parse("https://raw.githubusercontent.com/TechnicJelle/GitDroid/main/README.md"))
+          .getUrl(Uri.parse("https://raw.githubusercontent.com/TechnicJelle/TechnicJelle/main/README.md"))
+          // .getUrl(Uri.parse("https://raw.githubusercontent.com/termux/termux-app/master/README.md"))
+          // .getUrl(Uri.parse("https://raw.githubusercontent.com/Patrycioss/Street-Food-Fighters/main/README.md"))
+          // .getUrl(Uri.parse("https://raw.githubusercontent.com/Patrycioss/Algorithmic-Dungeon/master/README.md"))
           .then((HttpClientRequest request) => request.close())
           .then((HttpClientResponse response) => response.transform(const Utf8Decoder()).listen(set));
       // <-- Release Markdown
@@ -66,7 +82,12 @@ class RepoData {
 
       releaseApkAssets.clear();
       for (int i = 0; i < releaseApkAssetCount; i++) {
-        releaseApkAssets.add("app.apk");
+        releaseApkAssets.add(ReleaseAsset(
+          name: "app.apk",
+          size: Random().nextInt(10000),
+          downloadCount: Random().nextInt(10000),
+          browserDownloadUrl: "",
+        ));
       }
       // <-- Apk Assets
     }
@@ -114,6 +135,25 @@ class RepoItem extends StatefulWidget {
 }
 
 class _RepoItemState extends State<RepoItem> {
+  _launchURL(String text, String? href, String title) async {
+    if (href == null) {
+      return;
+    }
+
+    Uri url;
+    try {
+      url = Uri.parse(href);
+    } on FormatException {
+      return;
+    }
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      return;
+    }
+  }
+
   void _showRelease() {
     showDialog(
       context: context,
@@ -125,33 +165,66 @@ class _RepoItemState extends State<RepoItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).backgroundColor.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Flexible(
-                    child: SingleChildScrollView(
-                      child: MarkdownBody(
-                        data: widget.data.releaseMarkdown,
+                const Text("Release Notes", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                          width: 1,
+                        ),
+                        // color: Theme.of(context).backgroundColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.all(8),
+                        child: Stack(
+                          children: [
+                            const Divider(height: 0, color: Colors.transparent), //just there to make the MarkdownBody the full width of the dialog
+                            MarkdownBody(
+                              data: widget.data.releaseMarkdown,
+                              selectable: true,
+                              extensionSet: md.ExtensionSet(md.ExtensionSet.gitHubWeb.blockSyntaxes, md.ExtensionSet.gitHubWeb.inlineSyntaxes),
+                              imageBuilder: (uri, title, alt) {
+                                return Image.network(
+                                  uri.toString(),
+                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded), //TODO: Try SVG first
+                                );
+                              },
+                              onTapLink: _launchURL,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const Divider(),
-                const Text("Downloads", style: TextStyle(fontSize: 24)),
+                DefaultTextStyle(
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+                  ),
+                  child: widget.data.releaseApkAssetCount == 0 //if there are no apk assets, don't show the download button
+                      ? const Text("No Downloads")
+                      : const Text("Downloads"),
+                ),
                 ListView.builder(
                   shrinkWrap: true,
                   itemCount: widget.data.releaseApkAssetCount,
                   itemBuilder: (context, index) {
                     return ListTile(
-                      title: Text(widget.data.releaseApkAssets[index]),
+                      title: Text(widget.data.releaseApkAssets[index].name),
                       trailing: Opacity(
                         opacity: 0.7,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(NumberFormat.compact().format(Random().nextInt(10000))),
+                            Text(filesize(widget.data.releaseApkAssets[index].size)),
+                            const SizedBox(width: 24),
+                            Text(NumberFormat.compact().format(widget.data.releaseApkAssets[index].downloadCount)),
                             const Icon(Icons.file_download),
                           ],
                         ),

@@ -37,6 +37,9 @@ dependencies:
   package_info_plus:
   flutter_markdown: ^0.6.10+3
   intl: ^0.17.0
+  markdown: ^5.0.0
+  filesize: ^2.0.1
+  url_launcher: ^6.1.5
 
 dev_dependencies:
   flutter_test:

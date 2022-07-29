@@ -139,7 +139,10 @@ class _MyHomePageState extends State<MyHomePage> {
           // content: Text("Are you sure you want to delete") + Text("${apps[index]}?"),
           content: RichText(
             text: TextSpan(
-              style: const TextStyle(fontSize: 18),
+              style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+              ),
               children: <TextSpan>[
                 const TextSpan(text: "Are you sure you want to stop checking for updates for "),
                 TextSpan(text: "${repos[index].prettyName}?", style: const TextStyle(fontWeight: FontWeight.bold)),
