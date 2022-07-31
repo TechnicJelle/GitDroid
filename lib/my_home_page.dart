@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:gitdroid/repo.dart';
 import 'package:gitdroid/stack_overflow_snippets.dart';
@@ -47,22 +49,37 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addListItem() {
     TextEditingController textEditingController = TextEditingController();
-    bool valid = true; //starts off being valid, to not immediately show the red warning
+    String? errorMessage = null; //starts off being valid, to not immediately show the red warning
     Key key = UniqueKey(); //create a unique key for the text field (used by the shaker)
+    bool justShook = false; //used to prevent the shaker from clearing the error message if the repo didn't exist
 
-    bool validate(List<String> parts) {
-      if (parts.length != 2) return false;
-      return true;
+    void validate(List<String> parts) {
+      errorMessage = parts.length != 2 ? "Invalid GitHub URL" : null;
     }
 
     void add(StateSetter setDialogState) {
-      if (textEditingController.text == "") valid = false; //when the user presses Enter with no text, the dialog is not valid
-      List<String> input = RepoData.extractUserAndRepo(textEditingController.text); //
-      valid = validate(input); //validate the url one more time, just to be 100% sure
+      List<String> input = RepoData.extractUserAndRepo(textEditingController.text);
+      setDialogState(() {
+        validate(input); //validate the url one more time, just to be 100% sure
+        if (textEditingController.text == "") errorMessage = "Cannot be empty"; //when the user presses Enter with no text, the dialog is not valid
+      });
 
-      if (!valid) {
+      //if the url is valid, check if the repo actually exists
+      if (errorMessage == null) {
+        bool exists = false;
+        //check if repo exists
+        exists = Random().nextBool(); //TODO: implement API call to check if repo exists
+
+        if (!exists) {
+          errorMessage = "Repo does not exist"; //set the error message
+        }
+      }
+
+      //if there is an error message, shake and don't add the repo
+      if (errorMessage != null) {
         setDialogState(() {
           key = UniqueKey(); //make the text field shake
+          justShook = true;
         });
         return;
       }
@@ -85,13 +102,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 600,
                 child: ShakeWidget(
                   key: key,
-                  duration: Duration(milliseconds: valid ? 0 : 500),
+                  duration: Duration(milliseconds: errorMessage == null ? 0 : 500),
                   child: TextField(
                     controller: textEditingController,
                     style: const TextStyle(fontSize: 18),
                     onChanged: (value) {
                       setDialogState(() {
-                        valid = validate(RepoData.extractUserAndRepo(value));
+                        if (!justShook) {
+                          validate(RepoData.extractUserAndRepo(value));
+                        }
+                        justShook = false;
                       });
                     },
                     onEditingComplete: () {
@@ -103,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     autocorrect: false,
                     decoration: InputDecoration(
                       hintText: "https://github.com/user/repo",
-                      errorText: valid ? null : "Invalid GitHub URL",
+                      errorText: errorMessage,
                     ),
                     textCapitalization: TextCapitalization.none,
                     keyboardType: TextInputType.url,

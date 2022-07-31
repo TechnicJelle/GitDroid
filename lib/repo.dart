@@ -190,7 +190,9 @@ class _RepoItemState extends State<RepoItem> {
                               imageBuilder: (uri, title, alt) {
                                 return Image.network(
                                   uri.toString(),
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded), //TODO: Try SVG first
+                                  //I tried making it load the image as an SVG, but it didn't work,
+                                  // so I guess some images just won't be able to load.
+                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded),
                                 );
                               },
                               onTapLink: _launchURL,
