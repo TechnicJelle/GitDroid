@@ -85,13 +85,6 @@ class _MyHomePageState extends State<MyHomePage> {
           //close the dialog
           if (!mounted) return;
           Navigator.of(context).pop();
-        } else {
-          //if the url is invalid
-          setDialogState(() {
-            key = UniqueKey(); //make the text field shake
-            justShook = true;
-          });
-          return; //don't close the dialog
         }
       } catch (e) {
         //the repo didn't exist
@@ -103,6 +96,12 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         });
       }
+
+      //if the repo wasn't added, shake the text field
+      setDialogState(() {
+        key = UniqueKey(); //make the text field shake
+        justShook = true;
+      });
     }
 
     //show dialog with a text input
