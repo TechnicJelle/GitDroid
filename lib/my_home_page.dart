@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:gitdroid/repo.dart';
 import 'package:gitdroid/stack_overflow_snippets.dart';
+import 'package:github/github.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -24,6 +23,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String thisAppName = "Application";
   List<RepoData> repos = [];
+  GitHub github = GitHub();
 
   @override
   void initState() {
@@ -34,9 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (repos.isEmpty) {
       //TODO: Make this only happen once, on first launch
-      setState(() {
-        repos.add(RepoData("TechnicJelle", "GitDroid"));
-      });
+      addGitDroidRepo();
     }
   }
 
@@ -47,47 +45,64 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void addGitDroidRepo() async {
+    Repository gitdroid = await github.repositories.getRepository(RepositorySlug("TechnicJelle", "GitDroid"));
+    setState(() {
+      repos.add(RepoData(gitdroid));
+    });
+  }
+
   void _addListItem() {
     TextEditingController textEditingController = TextEditingController();
+    // ignore: avoid_init_to_null
     String? errorMessage = null; //starts off being valid, to not immediately show the red warning
     Key key = UniqueKey(); //create a unique key for the text field (used by the shaker)
     bool justShook = false; //used to prevent the shaker from clearing the error message if the repo didn't exist
 
     void validate(List<String> parts) {
       errorMessage = parts.length != 2 ? "Invalid GitHub URL" : null;
+      if (textEditingController.text == "") errorMessage = "Cannot be empty"; //when the user presses Enter with no text, the dialog is not valid
     }
 
-    void add(StateSetter setDialogState) {
+    Future<void> add(StateSetter setDialogState) async {
       List<String> input = RepoData.extractUserAndRepo(textEditingController.text);
       setDialogState(() {
         validate(input); //validate the url one more time, just to be 100% sure
-        if (textEditingController.text == "") errorMessage = "Cannot be empty"; //when the user presses Enter with no text, the dialog is not valid
       });
 
-      //if the url is valid, check if the repo actually exists
-      if (errorMessage == null) {
-        bool exists = false;
-        //check if repo exists
-        exists = Random().nextBool(); //TODO: implement API call to check if repo exists
+      //TODO: check if repo is already in repos
 
-        if (!exists) {
-          errorMessage = "Repo does not exist"; //set the error message
+      try {
+        //if the url is valid
+        if (errorMessage == null) {
+          //check if repo exists
+          Repository repo = await github.repositories.getRepository(RepositorySlug(input[0], input[1]));
+          //if didn't trigger the try-catch, add it to the list
+          setState(() {
+            repos.add(RepoData(repo));
+          });
+
+          //close the dialog
+          if (!mounted) return;
+          Navigator.of(context).pop();
+        } else {
+          //if the url is invalid
+          setDialogState(() {
+            key = UniqueKey(); //make the text field shake
+            justShook = true;
+          });
+          return; //don't close the dialog
         }
-      }
-
-      //if there is an error message, shake and don't add the repo
-      if (errorMessage != null) {
+      } catch (e) {
+        //the repo didn't exist
         setDialogState(() {
-          key = UniqueKey(); //make the text field shake
-          justShook = true;
+          if (e.toString().contains("Not Found")) {
+            errorMessage = "Repo does not exist";
+          } else {
+            errorMessage = "Error: ${e.toString()}";
+          }
         });
-        return;
       }
-
-      setState(() {
-        repos.add(RepoData(input[0], input[1]));
-      });
-      Navigator.of(context).pop();
     }
 
     //show dialog with a text input
@@ -166,7 +181,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <TextSpan>[
                 const TextSpan(text: "Are you sure you want to stop checking for updates for "),
                 TextSpan(text: "${repos[index].prettyName}?", style: const TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: "\n\n${repos[index].url}", style: const TextStyle(fontStyle: FontStyle.italic)),
+                TextSpan(text: "\n\n${repos[index].repo.htmlUrl}", style: const TextStyle(fontStyle: FontStyle.italic)),
               ],
             ),
           ),

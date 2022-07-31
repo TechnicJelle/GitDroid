@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:github/github.dart';
 import 'package:intl/intl.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
@@ -20,16 +21,12 @@ class ReleaseAsset {
 
 class RepoData {
   //Inputs
-  final String ownerName;
-  final String repoName;
+  final Repository repo;
 
   //Calculated in constructor
-  Uri url;
-  String prettyName;
+  final String prettyName;
 
   //Updated
-  Uri iconUrl;
-  String description;
   bool updateAvailable;
 
   String releaseMarkdown;
@@ -39,15 +36,12 @@ class RepoData {
   //UI State
   bool expanded = false;
 
-  RepoData(this.ownerName, this.repoName)
-      : url = Uri(scheme: "https", host: "github.com", pathSegments: [ownerName, repoName]),
-        prettyName = repoName //TODO (low-prio): Improve pretty name from url extraction
+  RepoData(this.repo)
+      : prettyName = repo.name //TODO (low-prio): Improve pretty name-ification
             .replaceAll(RegExp(r'[-_]'), ' ') //replace underscores and dashes with spaces
             .replaceAll(RegExp(r'\s+'), ' ') //remove multiple spaces
             .trim(), //trim whitespace
-        description = "",
         updateAvailable = false,
-        iconUrl = Uri(),
         releaseMarkdown = "Loading...",
         releaseApkAssetCount = 0,
         releaseApkAssets = [] {
@@ -56,8 +50,6 @@ class RepoData {
 
   void checkUpdate() {
     //TODO: Get all of this information from the GitHub API
-    iconUrl = Uri.https("avatars.githubusercontent.com", "/u/22576047", {'v': "4"});
-    description = "This is a description of the repo";
     updateAvailable = Random().nextBool();
 
     if (updateAvailable) {
@@ -98,7 +90,7 @@ class RepoData {
   }
 
   static List<String> extractUserAndRepo(String url) {
-    url = url.trim(); //ignore whitespace before and after
+    url = url.trim().toLowerCase(); //ignore whitespace before and after and ignore the casing
     if (url.contains(" ")) return []; //if the url contains a space, it's not a valid url
 
     //Check if the url is a valid url
@@ -265,7 +257,7 @@ class _RepoItemState extends State<RepoItem> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5),
             child: Image.network(
-              widget.data.iconUrl.toString(),
+              widget.data.repo.owner?.avatarUrl ?? "", //if the owner has no avatar url, make an error, so the errorBuilder will activate instead
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return const CircularProgressIndicator();
@@ -293,7 +285,7 @@ class _RepoItemState extends State<RepoItem> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.data.url.toString(),
+                  widget.data.repo.htmlUrl,
                   style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                 ),
                 widget.data.expanded
@@ -301,7 +293,7 @@ class _RepoItemState extends State<RepoItem> {
                         children: [
                           const SizedBox(height: 4),
                           Text(
-                            widget.data.description,
+                            widget.data.repo.description,
                             style: const TextStyle(fontSize: 13),
                           )
                         ],
