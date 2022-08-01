@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gitdroid/repo.dart';
-import 'package:gitdroid/stack_overflow_snippets.dart';
+import 'package:gitdroid/globals.dart';
+import 'package:gitdroid/repo_data.dart';
+import 'package:gitdroid/repo_item.dart';
 import 'package:github/github.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -23,18 +24,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String thisAppName = "Application";
   List<RepoData> repos = [];
-  GitHub github = GitHub();
 
   @override
   void initState() {
     super.initState();
     setAppName();
 
-    //TODO: Load repos from app data
+    //TODO (med-prio): Load repos from app data
 
+    //TODO (low-prio): Make this only happen once, on first launch
     if (repos.isEmpty) {
-      //TODO: Make this only happen once, on first launch
-      addGitDroidRepo();
+      addRepo("TechnicJelle", "GitDroid");
     }
   }
 
@@ -45,11 +45,24 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void addGitDroidRepo() async {
-    Repository gitdroid = await github.repositories.getRepository(RepositorySlug("TechnicJelle", "GitDroid"));
-    setState(() {
-      repos.add(RepoData(gitdroid));
-    });
+  Future<void> addRepo(String owner, String name) async {
+    RepositorySlug repoSlug = RepositorySlug(owner, name);
+    RepoData repoData = RepoData(repoSlug);
+    try {
+      Repository? repo = await getRepository(repoSlug);
+      //if didn't trigger an error, add repo to list
+      repos.add(repoData);
+      repoData.checkUpdate(setState: setState, reuseRepo: repo);
+    } catch (e) {
+      if (e.toString().contains(errorAPILimit)) {
+        //API limit reached, just adding repo to list without checking it
+        setState(() {
+          repos.add(repoData);
+        });
+        return;
+      }
+      rethrow;
+    }
   }
 
   void _addListItem() {
@@ -70,17 +83,12 @@ class _MyHomePageState extends State<MyHomePage> {
         validate(input); //validate the url one more time, just to be 100% sure
       });
 
-      //TODO: check if repo is already in repos
+      //TODO (med-prio): check if repo is already in repos
 
       try {
         //if the url is valid
         if (errorMessage == null) {
-          //check if repo exists
-          Repository repo = await github.repositories.getRepository(RepositorySlug(input[0], input[1]));
-          //if didn't trigger the try-catch, add it to the list
-          setState(() {
-            repos.add(RepoData(repo));
-          });
+          await addRepo(input[0], input[1]);
 
           //close the dialog
           if (!mounted) return;
@@ -89,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
       } catch (e) {
         //the repo didn't exist
         setDialogState(() {
-          if (e.toString().contains("Not Found")) {
+          if (e.toString().contains(errorRepoNotFound)) {
             errorMessage = "Repo does not exist";
           } else {
             errorMessage = "Error: ${e.toString()}";
@@ -180,7 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <TextSpan>[
                 const TextSpan(text: "Are you sure you want to stop checking for updates for "),
                 TextSpan(text: "${repos[index].prettyName}?", style: const TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: "\n\n${repos[index].repo.htmlUrl}", style: const TextStyle(fontStyle: FontStyle.italic)),
+                TextSpan(text: "\n\n${repos[index].url.toString()}", style: const TextStyle(fontStyle: FontStyle.italic)),
               ],
             ),
           ),
@@ -207,11 +215,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _pullRefresh() async {
-    setState(() {
-      for (RepoData repo in repos) {
-        repo.checkUpdate();
-      }
+    for (RepoData repo in repos) {
+      repo.checkUpdate(setState: setState);
+    }
 
+    setState(() {
       //sort the repos with the updates at the top (sort alphabetically for the rest)
       repos.sort((RepoData a, RepoData b) {
         if (a.updateAvailable && !b.updateAvailable) return -1;
