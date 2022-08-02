@@ -1,21 +1,27 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:github/github.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 GitHub github = GitHub();
+int? remainingApiCalls;
 const String errorAPILimit = "API rate limit exceeded";
 const String errorRepoNotFound = "Not Found";
 
-Future<Repository?> getRepository(RepositorySlug repoSlug) async {
+Future<Repository?> getRepository(RepositorySlug repoSlug, {StateSetter? setState}) async {
   try {
     if (github.rateLimitRemaining == 0) {
+      updateApiCalls(setState!);
       throw Exception(errorAPILimit);
     }
-    return await github.repositories.getRepository(repoSlug);
+    Repository repo = await github.repositories.getRepository(repoSlug);
+    updateApiCalls(setState!);
+    return repo;
   } catch (e) {
     print(e.toString());
     if (e.toString().contains(errorAPILimit)) {
-      //TODO: Show this to the user via a snack bar
+      //TODO (low-prio): Show this to the user via a snack bar
       //TODO (low-prio): Ask user for API key
       print("API limit reached!! Try again on ${github.rateLimitReset}");
       rethrow;
@@ -25,6 +31,13 @@ Future<Repository?> getRepository(RepositorySlug repoSlug) async {
     }
   }
   return null;
+}
+
+void updateApiCalls(StateSetter setState) {
+  setState(() {
+    print("updating calls ${Random().nextInt(1000)}");
+    remainingApiCalls = github.rateLimitRemaining;
+  });
 }
 
 Future<void> launchURL(String text, String? href, String title) async {

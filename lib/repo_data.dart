@@ -49,7 +49,7 @@ class RepoData {
     try {
       //did not get a reuseRepo passed in, so we're getting a new one
       if (reuseRepo == null) {
-        repo = await getRepository(repoSlug);
+        repo = await getRepository(repoSlug, setState: setState);
       } else {
         repo = reuseRepo;
       }

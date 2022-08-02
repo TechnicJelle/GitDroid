@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gitdroid/release.dart';
+import 'package:gitdroid/release_dialog.dart';
 import 'package:gitdroid/repo_data.dart';
 
 class RepoItem extends StatefulWidget {

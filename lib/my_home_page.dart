@@ -49,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
     RepositorySlug repoSlug = RepositorySlug(owner, name);
     RepoData repoData = RepoData(repoSlug);
     try {
-      Repository? repo = await getRepository(repoSlug);
+      Repository? repo = await getRepository(repoSlug, setState: setState);
       //if didn't trigger an error, add repo to list
       repos.add(repoData);
       repoData.checkUpdate(setState: setState, reuseRepo: repo);
@@ -169,6 +169,10 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         );
       },
+    ).then(
+      (value) => {
+        updateApiCalls(setState),
+      },
     );
   }
 
@@ -241,6 +245,16 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(thisAppName),
+        actions: [
+          IconButton(
+            onPressed: () => {
+              //TODO: (low-prio) open dialog for inputting an API key
+              updateApiCalls(setState),
+            },
+            icon: Text(remainingApiCalls == null ? "" : remainingApiCalls.toString()),
+            tooltip: "GitHub API calls remaining this hour",
+          )
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addListItem,
