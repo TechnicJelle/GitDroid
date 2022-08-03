@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:gitdroid/release_dialog.dart';
-import 'package:gitdroid/repo_data.dart';
+import 'package:gitdroid/globals.dart';
+
+import 'release_dialog.dart';
+import 'repo_data.dart';
 
 class RepoItem extends StatefulWidget {
   const RepoItem({
@@ -80,10 +82,26 @@ class _RepoItemState extends State<RepoItem> {
                 onPressed: () {
                   showRelease(context, widget);
                 },
-                onLongPress: () {}, //just here so it doesn't pop the delete dialog when the button is long pressed
-                child: const Text("v0.0.1 ➔ v0.0.2"),
+                onLongPress: () {
+                  launchURL("", widget.data.releasesUrl.toString(), "");
+                }, //just here so it doesn't pop the delete dialog when the button is long pressed
+                child: Text(widget.data.releaseTag ?? ""),
               )
-            : const Text("v0.0.1"),
+            : OutlinedButton(
+                onPressed: widget.data.releaseTag == null
+                    ? null
+                    : () {
+                        showRelease(context, widget);
+                      },
+                onLongPress: () {
+                  launchURL("", widget.data.releasesUrl.toString(), "");
+                }, //just here so it doesn't pop the delete dialog when the button is long pressed
+                child: DefaultTextStyle(
+                  //muted colour:
+                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color), //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+                  child: widget.data.releaseTag == null ? const Text(noReleases) : Text(widget.data.releaseTag ?? "this cannot ever happen"),
+                ),
+              ),
       ],
     );
   }

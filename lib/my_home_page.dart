@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:gitdroid/globals.dart';
-import 'package:gitdroid/repo_data.dart';
-import 'package:gitdroid/repo_item.dart';
 import 'package:github/github.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+
+import 'globals.dart';
+import 'repo_data.dart';
+import 'repo_item.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -22,30 +22,21 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String thisAppName = "Application";
   List<RepoData> repos = [];
 
   @override
   void initState() {
     super.initState();
-    setAppName();
 
     //TODO (med-prio): Load repos from app data
 
     //TODO (low-prio): Make this only happen once, on first launch
     if (repos.isEmpty) {
-      addRepo("TechnicJelle", "GitDroid");
+      addRepoToList("TechnicJelle", "GitDroid");
     }
   }
 
-  void setAppName() async {
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    setState(() {
-      thisAppName = packageInfo.appName;
-    });
-  }
-
-  Future<void> addRepo(String owner, String name) async {
+  Future<void> addRepoToList(String owner, String name) async {
     RepositorySlug repoSlug = RepositorySlug(owner, name);
     RepoData repoData = RepoData(repoSlug);
     try {
@@ -73,22 +64,23 @@ class _MyHomePageState extends State<MyHomePage> {
     bool justShook = false; //used to prevent the shaker from clearing the error message if the repo didn't exist
 
     void validate(List<String> parts) {
-      errorMessage = parts.length != 2 ? "Invalid GitHub URL" : null;
-      if (textEditingController.text == "") errorMessage = "Cannot be empty"; //when the user presses Enter with no text, the dialog is not valid
+      errorMessage = parts.length != 2 ? invalidGitHubURL : null;
+      if (textEditingController.text == "") errorMessage = cannotBeEmpty; //when the user presses Enter with no text, the dialog is not valid
     }
 
-    Future<void> add(StateSetter setDialogState) async {
-      List<String> input = RepoData.extractUserAndRepo(textEditingController.text);
+    Future<void> attemptAdd(StateSetter setDialogState) async {
+      List<String> input = extractUserAndRepo(textEditingController.text);
       setDialogState(() {
         validate(input); //validate the url one more time, just to be 100% sure
       });
+      print("a");
 
       //TODO (med-prio): check if repo is already in repos
 
       try {
         //if the url is valid
         if (errorMessage == null) {
-          await addRepo(input[0], input[1]);
+          await addRepoToList(input[0], input[1]);
 
           //close the dialog
           if (!mounted) return;
@@ -96,11 +88,12 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       } catch (e) {
         //the repo didn't exist
+        print(e.toString());
         setDialogState(() {
-          if (e.toString().contains(errorRepoNotFound)) {
-            errorMessage = "Repo does not exist";
+          if (e is RepositoryNotFound) {
+            errorMessage = repoDoesNotExist;
           } else {
-            errorMessage = "Error: ${e.toString()}";
+            errorMessage = "Error: ${e.toString()}"; //hopefully this will never happen
           }
         });
       }
@@ -119,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text("Add to list"),
+              title: const Text(addToList),
               content: SizedBox(
                 width: 600,
                 child: ShakeWidget(
@@ -131,13 +124,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     onChanged: (value) {
                       setDialogState(() {
                         if (!justShook) {
-                          validate(RepoData.extractUserAndRepo(value));
+                          validate(extractUserAndRepo(value));
                         }
                         justShook = false;
                       });
                     },
                     onEditingComplete: () {
-                      add(setDialogState);
+                      attemptAdd(setDialogState);
                     },
                     autofocus: true,
                     autofillHints: const [AutofillHints.url],
@@ -155,14 +148,14 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text("Cancel"),
+                  child: const Text(cancel),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  onPressed: () => add(setDialogState),
-                  child: const Text("Add"),
+                  onPressed: () => attemptAdd(setDialogState),
+                  child: const Text(add),
                 ),
               ],
             );
@@ -181,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Delete"),
+          title: const Text(delete),
           // content: Text("Are you sure you want to delete") + Text("${apps[index]}?"),
           content: RichText(
             text: TextSpan(
@@ -190,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
               ),
               children: <TextSpan>[
-                const TextSpan(text: "Are you sure you want to stop checking for updates for "),
+                const TextSpan(text: areYouSureDelete),
                 TextSpan(text: "${repos[index].prettyName}?", style: const TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(text: "\n\n${repos[index].url.toString()}", style: const TextStyle(fontStyle: FontStyle.italic)),
               ],
@@ -198,13 +191,13 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text("Cancel"),
+              child: const Text(cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text("Delete"),
+              child: const Text(delete),
               onPressed: () {
                 setState(() {
                   repos.removeAt(index);
@@ -223,6 +216,9 @@ class _MyHomePageState extends State<MyHomePage> {
       repo.checkUpdate(setState: setState);
     }
 
+    //TODO: (low-prio): wait for all repos to finish checking before reordering the list
+    // currently, the list is reordered once all the threads have been started, but not when they're all done, which can take a while
+    // this can cause the list to not be in the order it should be in
     setState(() {
       //sort the repos with the updates at the top (sort alphabetically for the rest)
       repos.sort((RepoData a, RepoData b) {
@@ -244,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(thisAppName),
+        title: const Text("Git-Droid"),
         actions: [
           IconButton(
             onPressed: () => {
@@ -252,13 +248,13 @@ class _MyHomePageState extends State<MyHomePage> {
               updateApiCalls(setState),
             },
             icon: Text(remainingApiCalls == null ? "" : remainingApiCalls.toString()),
-            tooltip: "GitHub API calls remaining this hour",
+            tooltip: apiCallsRemainingDesc,
           )
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addListItem,
-        tooltip: "Add new app",
+        tooltip: addFabTooltip,
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
       body: RefreshIndicator(

@@ -1,11 +1,11 @@
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:gitdroid/repo_item.dart';
 import 'package:intl/intl.dart';
 import 'package:markdown/markdown.dart' as md;
 
 import 'globals.dart';
+import 'repo_item.dart';
 
 void showRelease(BuildContext context, RepoItem widget) {
   showDialog(
@@ -18,7 +18,7 @@ void showRelease(BuildContext context, RepoItem widget) {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Release Notes", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+              const Text(releaseNotes, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Flexible(
                 child: SingleChildScrollView(
@@ -63,8 +63,8 @@ void showRelease(BuildContext context, RepoItem widget) {
                   color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
                 ),
                 child: widget.data.releaseApkAssetCount == 0 //if there are no apk assets, don't show the download button
-                    ? const Text("No Downloads")
-                    : const Text("Downloads"),
+                    ? const Text(noDownloads)
+                    : const Text(downloads),
               ),
               ListView.builder(
                 shrinkWrap: true,
@@ -95,7 +95,7 @@ void showRelease(BuildContext context, RepoItem widget) {
         ),
         actions: <Widget>[
           TextButton(
-            child: const Text("Close"),
+            child: const Text(closeDialog),
             onPressed: () {
               Navigator.of(context).pop();
             },
