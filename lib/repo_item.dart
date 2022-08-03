@@ -60,6 +60,7 @@ class _RepoItemState extends State<RepoItem> {
                   widget.data.url.toString(),
                   style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                 ),
+                //TODO (med-prio): when folded in, display only owner name, when expanded, display full link (<--hold to copy)
                 widget.data.expanded
                     ? Column(
                         children: [

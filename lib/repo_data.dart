@@ -30,7 +30,6 @@ class RepoData {
 
   String? releaseTag;
   String releaseMarkdown;
-  int releaseApkAssetCount;
   List<ReleaseAPK> releaseApkAssets;
 
   //UI State
@@ -45,7 +44,6 @@ class RepoData {
         updateAvailable = false,
         releaseTag = null,
         releaseMarkdown = loadingReleaseMarkdown,
-        releaseApkAssetCount = 0,
         releaseApkAssets = [];
 
   Future<void> checkUpdate({StateSetter? setState, Repository? reuseRepo}) async {
@@ -80,19 +78,18 @@ class RepoData {
         releaseMarkdown = release?.body ?? noReleaseNotes;
         releaseTag = release?.tagName ?? noReleaseNotes;
 
-        //TODO (high-prio): Turn this back on and fix it up, integrate fully with API
-        // // Apk Assets -->
-        // releaseApkAssetCount = Random().nextInt(3) + 0;
-        //
-        // releaseApkAssets.clear();
-        // for (int i = 0; i < releaseApkAssetCount; i++) {
-        //   releaseApkAssets.add(ReleaseAsset(
-        //     name: "app.apk",
-        //     size: Random().nextInt(10000),
-        //     downloadCount: Random().nextInt(10000),
-        //     browserDownloadUrl: "",
-        //   ));
-        // }
+        // Apk Assets -->
+        releaseApkAssets.clear();
+        release?.assets?.forEach((ReleaseAsset asset) {
+          if (asset.name!.endsWith(".apk")) {
+            releaseApkAssets.add(ReleaseAPK(
+              name: asset.name ?? "",
+              size: asset.size ?? 0,
+              downloadCount: asset.downloadCount ?? 0,
+              browserDownloadUrl: asset.browserDownloadUrl ?? "",
+            ));
+          }
+        });
         // <-- Apk Assets
 
         //TODO (med-prio): check if updated release is newer than currently installed version

@@ -73,7 +73,6 @@ class _MyHomePageState extends State<MyHomePage> {
       setDialogState(() {
         validate(input); //validate the url one more time, just to be 100% sure
       });
-      print("a");
 
       //TODO (med-prio): check if repo is already in repos
 
@@ -88,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       } catch (e) {
         //the repo didn't exist
-        print(e.toString());
+        // print(e.toString());
         setDialogState(() {
           if (e is RepositoryNotFound) {
             errorMessage = repoDoesNotExist;
@@ -139,6 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     decoration: InputDecoration(
                       hintText: "https://github.com/user/repo",
                       errorText: errorMessage,
+                      errorStyle: const TextStyle(fontSize: 13),
                     ),
                     textCapitalization: TextCapitalization.none,
                     keyboardType: TextInputType.url,

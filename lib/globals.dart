@@ -6,7 +6,7 @@ GitHub github = GitHub();
 int? remainingApiCalls;
 const String errorAPILimit = "API rate limit exceeded";
 
-const String invalidGitHubURL = "Invalid GitHub URL";
+const String invalidGitHubURL = "Not a GitHub Repository";
 const String cannotBeEmpty = "Cannot be empty";
 const String repoDoesNotExist = "Repo does not exist";
 const String addToList = "Add to list";
@@ -29,12 +29,10 @@ const String noReleaseTag = "";
 Future<Repository?> getRepository(RepositorySlug repoSlug, {StateSetter? setState}) async {
   try {
     if (canCallApi()) {
-      print("> Calling GitHub API for repo getting");
       Repository repo = await github.repositories.getRepository(repoSlug);
       updateApiCalls(setState!); //if successful API call, update the number...
       return repo;
     } else {
-      print("> Not calling GitHub API for repo getting");
       throw Exception(errorAPILimit);
     }
   } catch (e) {
@@ -54,12 +52,10 @@ Future<Repository?> getRepository(RepositorySlug repoSlug, {StateSetter? setStat
 Future<Release?> getLatestRelease(RepositorySlug repoSlug, {StateSetter? setState}) async {
   try {
     if (canCallApi()) {
-      print("} Calling GitHub API for release getting");
       Release rel = await github.repositories.getLatestRelease(repoSlug);
       updateApiCalls(setState!); //if successful API call, update the number...
       return rel;
     } else {
-      print("} Not calling GitHub API for release getting");
       throw Exception(errorAPILimit);
     }
   } catch (e) {

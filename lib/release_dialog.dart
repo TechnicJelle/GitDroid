@@ -28,7 +28,6 @@ void showRelease(BuildContext context, RepoItem widget) {
                         color: Theme.of(context).dividerColor,
                         width: 1,
                       ),
-                      // color: Theme.of(context).backgroundColor.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Container(
@@ -40,6 +39,7 @@ void showRelease(BuildContext context, RepoItem widget) {
                             data: widget.data.releaseMarkdown,
                             selectable: true,
                             extensionSet: md.ExtensionSet(md.ExtensionSet.gitHubWeb.blockSyntaxes, md.ExtensionSet.gitHubWeb.inlineSyntaxes),
+                            softLineBreak: true,
                             imageBuilder: (uri, title, alt) {
                               return Image.network(
                                 uri.toString(),
@@ -62,33 +62,35 @@ void showRelease(BuildContext context, RepoItem widget) {
                   fontSize: 20,
                   color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
                 ),
-                child: widget.data.releaseApkAssetCount == 0 //if there are no apk assets, don't show the download button
+                child: widget.data.releaseApkAssets.isEmpty //if there are no apk assets, don't show the download button
                     ? const Text(noDownloads)
                     : const Text(downloads),
               ),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: widget.data.releaseApkAssetCount,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(widget.data.releaseApkAssets[index].name),
-                    trailing: Opacity(
-                      opacity: 0.7,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(filesize(widget.data.releaseApkAssets[index].size)),
-                          const SizedBox(width: 24),
-                          Text(NumberFormat.compact().format(widget.data.releaseApkAssets[index].downloadCount)),
-                          const Icon(Icons.file_download),
-                        ],
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.data.releaseApkAssets.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(widget.data.releaseApkAssets[index].name),
+                      trailing: Opacity(
+                        opacity: 0.7,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(filesize(widget.data.releaseApkAssets[index].size)),
+                            const SizedBox(width: 24),
+                            Text(NumberFormat.compact().format(widget.data.releaseApkAssets[index].downloadCount)),
+                            const Icon(Icons.file_download),
+                          ],
+                        ),
                       ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  );
-                },
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
