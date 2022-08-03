@@ -28,20 +28,20 @@ const String noReleaseTag = "";
 
 Future<Repository?> getRepository(RepositorySlug repoSlug, {StateSetter? setState}) async {
   try {
-    //TODO (high-prio) when API rate limit exceeded, it gets stuck at the next line
-    // possible fix: use the timer in outOfApiCalls() to check if the API rate limit is still exceeded, and if so, throw. if it's not, then proceed to call the API again.
-    Repository repo = await github.repositories.getRepository(repoSlug);
-    updateApiCalls(setState!);
-    if (remainingApiCalls == 0) {
-      //TODO (high-prio): upon last allowed API call, this also throws an error, because the API rate limit just was exceeded, while it did succeed
-      //possible fix: due to the to do above, this should not be needed anymore
+    if (canCallApi()) {
+      print("> Calling GitHub API for repo getting");
+      Repository repo = await github.repositories.getRepository(repoSlug);
+      updateApiCalls(setState!); //if successful API call, update the number...
+      return repo;
+    } else {
+      print("> Not calling GitHub API for repo getting");
       throw Exception(errorAPILimit);
     }
-    return repo;
   } catch (e) {
     // print(e.toString());
+    updateApiCalls(setState!); //...but also when the API call failed, we need to update the number, because it did happen
     if (e.toString().contains(errorAPILimit)) {
-      outOfApiCalls();
+      outOfApiCallsWarning();
       rethrow;
     }
     if (e is RepositoryNotFound) {
@@ -53,16 +53,20 @@ Future<Repository?> getRepository(RepositorySlug repoSlug, {StateSetter? setStat
 
 Future<Release?> getLatestRelease(RepositorySlug repoSlug, {StateSetter? setState}) async {
   try {
-    Release rel = await github.repositories.getLatestRelease(repoSlug);
-    updateApiCalls(setState!);
-    if (remainingApiCalls == 0) {
+    if (canCallApi()) {
+      print("} Calling GitHub API for release getting");
+      Release rel = await github.repositories.getLatestRelease(repoSlug);
+      updateApiCalls(setState!); //if successful API call, update the number...
+      return rel;
+    } else {
+      print("} Not calling GitHub API for release getting");
       throw Exception(errorAPILimit);
     }
-    return rel;
   } catch (e) {
     // print(e.toString());
+    updateApiCalls(setState!); //...but also when the API call failed, we need to update the number, because it did happen
     if (e.toString().contains(errorAPILimit)) {
-      outOfApiCalls();
+      outOfApiCallsWarning();
       rethrow;
     }
     if (e is ReleaseNotFound) {
@@ -72,18 +76,24 @@ Future<Release?> getLatestRelease(RepositorySlug repoSlug, {StateSetter? setStat
   return null;
 }
 
-Duration? outOfApiCalls() {
+int diff() {
+  return github.rateLimitReset!.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch;
+}
+
+bool canCallApi() {
+  return github.rateLimitRemaining == null || github.rateLimitRemaining! > 0 || diff() <= 0;
+}
+
+void outOfApiCallsWarning() {
   //TODO (low-prio): Show this to the user via a snack bar
   //TODO (low-prio): Ask user for API key
   if (github.rateLimitReset != null) {
-    Duration timeLeft = Duration(milliseconds: github.rateLimitReset!.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch);
+    Duration timeLeft = Duration(milliseconds: diff());
     print("API limit reached! Try again in "
         "${timeLeft.inHours}:"
         "${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")}:"
         "${(timeLeft.inSeconds % 60).toString().padLeft(2, "0")}");
-    return timeLeft;
   }
-  return null;
 }
 
 void updateApiCalls(StateSetter setState) {
