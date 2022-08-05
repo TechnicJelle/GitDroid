@@ -29,6 +29,7 @@ class RepoData {
   bool updateAvailable;
 
   String? releaseTag;
+  String releaseTitle;
   String releaseMarkdown;
   List<ReleaseAPK> releaseApkAssets;
 
@@ -43,6 +44,7 @@ class RepoData {
         description = "",
         updateAvailable = false,
         releaseTag = null,
+        releaseTitle = releaseNotes,
         releaseMarkdown = loadingReleaseMarkdown,
         releaseApkAssets = [];
 
@@ -75,8 +77,9 @@ class RepoData {
           throw ReleaseNotFound;
         }
 
-        releaseMarkdown = release?.body ?? noReleaseNotes;
         releaseTag = release?.tagName ?? noReleaseNotes;
+        releaseTitle = release?.name ?? releaseNotes;
+        releaseMarkdown = release?.body ?? noReleaseNotes;
 
         // Apk Assets -->
         releaseApkAssets.clear();

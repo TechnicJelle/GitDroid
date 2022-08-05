@@ -18,7 +18,7 @@ void showRelease(BuildContext context, RepoItem widget) {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(releaseNotes, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+              Text(widget.data.releaseTitle, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Flexible(
                 child: SingleChildScrollView(
