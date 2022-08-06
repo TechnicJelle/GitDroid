@@ -20,6 +20,7 @@ class RepoData {
   Uri url; //also updated
   Uri releasesUrl;
   String prettyName; //also updated
+  String ownerName; //also updated
 
   //Updated
   Repository? repo;
@@ -40,6 +41,7 @@ class RepoData {
       : url = Uri(scheme: "https", host: "github.com", pathSegments: [repoSlug.owner, repoSlug.name]),
         releasesUrl = Uri(scheme: "https", host: "github.com", pathSegments: [repoSlug.owner, repoSlug.name, "releases"]),
         prettyName = namePrettier(repoSlug.name),
+        ownerName = repoSlug.owner,
         iconUrl = Uri(),
         description = "",
         updateAvailable = false,
@@ -65,6 +67,7 @@ class RepoData {
       setState!(() {
         url = Uri.parse(repo?.htmlUrl ?? url.toString());
         prettyName = namePrettier(repo?.name ?? repoSlug.name);
+        ownerName = repo?.owner?.login ?? repoSlug.owner;
 
         iconUrl = Uri.parse(repo?.owner?.avatarUrl ?? "");
         description = repo?.description ?? "";

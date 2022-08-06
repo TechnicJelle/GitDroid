@@ -40,6 +40,7 @@ dependencies:
   filesize: ^2.0.1
   url_launcher: ^6.1.5
   github: ^9.4.0
+  another_flushbar: ^1.10.29
 
 dev_dependencies:
   flutter_test:

@@ -1,4 +1,6 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gitdroid/globals.dart';
 
 import 'release_dialog.dart';
@@ -56,11 +58,28 @@ class _RepoItemState extends State<RepoItem> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  widget.data.url.toString(),
-                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                GestureDetector(
+                  onLongPress: widget.data.expanded
+                      ? () async => {
+                            await Clipboard.setData(ClipboardData(text: widget.data.url.toString())),
+                            Flushbar(
+                              message: copiedURLToClipboard,
+                              icon: const Icon(
+                                Icons.copy,
+                                size: 28.0,
+                                color: Colors.blue,
+                              ),
+                              duration: const Duration(seconds: 3),
+                              flushbarPosition: FlushbarPosition.TOP,
+                              animationDuration: const Duration(milliseconds: 300),
+                            )..show(context),
+                          }
+                      : null,
+                  child: Text(
+                    widget.data.expanded ? widget.data.url.toString() : widget.data.ownerName,
+                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  ),
                 ),
-                //TODO (med-prio): when folded in, display only owner name, when expanded, display full link (<--hold to copy)
                 widget.data.expanded
                     ? Column(
                         children: [

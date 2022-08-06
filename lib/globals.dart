@@ -17,6 +17,7 @@ const String closeDialog = "Close";
 const String areYouSureDelete = "Are you sure you want to stop checking for updates for ";
 const String apiCallsRemainingDesc = "GitHub API calls remaining this hour";
 const String addFabTooltip = "Add new app";
+const String copiedURLToClipboard = "Copied URL to clipboard";
 
 const String releaseNotes = "Release notes";
 const String noReleases = "No releases";
