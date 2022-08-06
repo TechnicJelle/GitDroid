@@ -31,7 +31,6 @@ jobs:
       with:
         flutter-version: '3.0.5'
     - run: flutter pub get
-    - run: flutter test
     - run: flutter build apk
     - run: find . | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
 
