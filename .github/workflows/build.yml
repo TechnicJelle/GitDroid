@@ -32,5 +32,10 @@ jobs:
         flutter-version: '3.0.5'
     - run: flutter pub get
     - run: flutter build apk
-    - run: find . | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.0
+      with:
+        # A file, directory or wildcard pattern that describes what to upload
+        path: build/app/outputs/flutter-apk
+        # The desired behavior if no files are found using the provided path.
 
