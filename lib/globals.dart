@@ -1,3 +1,4 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:github/github.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,6 +17,7 @@ const String delete = "Delete";
 const String closeDialog = "Close";
 const String areYouSureDelete = "Are you sure you want to stop checking for updates for ";
 const String apiCallsRemainingDesc = "GitHub API calls remaining this hour";
+const String apiWarning = "GitHub API limit reached! Try again in ";
 const String addFabTooltip = "Add new app";
 const String copiedURLToClipboard = "Copied URL to clipboard";
 
@@ -26,6 +28,11 @@ const String loadingReleaseMarkdown = "Loading release notes...";
 const String noDownloads = "No downloads";
 const String downloads = "Downloads";
 const String noReleaseTag = "";
+
+//From https://stackoverflow.com/a/69299440/8109619
+class GlobalContext {
+  static GlobalKey<NavigatorState> key = GlobalKey<NavigatorState>();
+}
 
 Future<Repository?> getRepository(RepositorySlug repoSlug, {StateSetter? setState}) async {
   try {
@@ -82,14 +89,23 @@ bool canCallApi() {
 }
 
 void outOfApiCallsWarning() {
-  //TODO (low-prio): Show this to the user via a snack bar
   //TODO (low-prio): Ask user for API key
   if (github.rateLimitReset != null) {
     Duration timeLeft = Duration(milliseconds: diff());
-    print("API limit reached! Try again in "
-        "${timeLeft.inHours}:"
-        "${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")}:"
-        "${(timeLeft.inSeconds % 60).toString().padLeft(2, "0")}");
+    Flushbar(
+      message: "$apiWarning"
+          "${timeLeft.inHours}:"
+          "${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")}:"
+          "${(timeLeft.inSeconds % 60).toString().padLeft(2, "0")}",
+      icon: const Icon(
+        Icons.timelapse_rounded,
+        size: 28.0,
+        color: Colors.orange,
+      ),
+      duration: const Duration(seconds: 3),
+      flushbarPosition: FlushbarPosition.TOP,
+      animationDuration: const Duration(milliseconds: 300),
+    ).show(GlobalContext.key.currentContext!);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gitdroid/globals.dart';
 
 import 'my_home_page.dart';
 
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
           )),
       themeMode: ThemeMode.system,
       home: const MyHomePage(),
+      navigatorKey: GlobalContext.key,
     );
   }
 }
