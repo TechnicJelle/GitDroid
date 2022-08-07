@@ -17,7 +17,7 @@ const String delete = "Delete";
 const String closeDialog = "Close";
 const String areYouSureDelete = "Are you sure you want to stop checking for updates for ";
 const String apiCallsRemainingDesc = "GitHub API calls remaining this hour";
-const String apiWarning = "GitHub API limit reached! Try again in ";
+const String apiWarning = "GitHub API limit reached!";
 const String addFabTooltip = "Add new app";
 const String copiedURLToClipboard = "Copied URL to clipboard";
 
@@ -89,24 +89,102 @@ bool canCallApi() {
 }
 
 void outOfApiCallsWarning() {
-  //TODO (low-prio): Ask user for API key
   if (github.rateLimitReset != null) {
     Duration timeLeft = Duration(milliseconds: diff());
     Flushbar(
-      message: "$apiWarning"
-          "${timeLeft.inHours}:"
-          "${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")}:"
-          "${(timeLeft.inSeconds % 60).toString().padLeft(2, "0")}",
+      //TODO (high-prio): make global const
+      title: apiWarning,
+      message: "Try again in ${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")} minutes"
+          "\nYou can use an API key to increase the number of API calls you can make per hour.", //TODO (low-prio): Shorten this text (move it into the dialog)
       icon: const Icon(
         Icons.timelapse_rounded,
         size: 28.0,
         color: Colors.orange,
       ),
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 7), //TODO (low-prio): This is too long, but it's just enough for people to read the whole text, so reduce this
       flushbarPosition: FlushbarPosition.TOP,
       animationDuration: const Duration(milliseconds: 300),
+      mainButton: ElevatedButton(
+        onPressed: () {
+          apiDialog();
+        },
+        child: const Text("API Key"), //TODO (high-prio): make global const
+      ),
     ).show(GlobalContext.key.currentContext!);
   }
+}
+
+void apiDialog() {
+  //TODO (med-prio): Make this dialog look better
+  // - Information about what this does
+  // - Improve the TextField (error handling, shake, etc)
+  // - Add a link to a guide on how to get an API key
+  // - Make all the used strings here global const
+  TextEditingController textEditingController = TextEditingController();
+
+  Future<void> attemptSubmit() async {
+    try {
+      print(textEditingController.text);
+      GitHub newGitHub = github = GitHub(auth: Authentication.withToken(textEditingController.text));
+      Repository repo = await newGitHub.repositories.getRepository(RepositorySlug("TechnicJelle", "GitDroid"));
+      print(repo.description);
+      print(newGitHub.rateLimitRemaining);
+      github = newGitHub;
+      //TODO: Update the API calls number in the UI
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  showDialog(
+    context: GlobalContext.key.currentContext!,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text("Fill in API key"),
+            content: SizedBox(
+              width: 600,
+              child: TextField(
+                controller: textEditingController,
+                style: const TextStyle(fontSize: 18),
+                onChanged: (value) {
+                  print(value);
+                },
+                onEditingComplete: () {
+                  attemptSubmit();
+                },
+                autofocus: true,
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  hintText: "api key",
+                  errorStyle: TextStyle(fontSize: 13),
+                ),
+                textCapitalization: TextCapitalization.none,
+                keyboardType: TextInputType.text,
+                maxLines: 1,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text(cancel),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                onPressed: () => attemptSubmit(),
+                child: const Text("Submit"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  ).then(
+    (value) => {},
+  );
 }
 
 void updateApiCalls(StateSetter setState) {

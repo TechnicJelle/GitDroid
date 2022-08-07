@@ -243,9 +243,9 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text("Git-Droid"),
         actions: [
           IconButton(
-            onPressed: () => {
-              //TODO: (low-prio) open dialog for inputting an API key
-              updateApiCalls(setState),
+            onPressed: () {
+              updateApiCalls(setState);
+              apiDialog();
             },
             icon: Text(remainingApiCalls == null ? "" : remainingApiCalls.toString()),
             tooltip: apiCallsRemainingDesc,
