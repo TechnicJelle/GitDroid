@@ -23,8 +23,8 @@ class RepoData {
   String ownerName; //also updated
 
   //Updated
-  Repository? repo;
-  Release? release;
+  Repository? _repo; //private, do not access outside of this class
+  Release? _release; //private, do not access outside of this class
   Uri iconUrl;
   String description;
   bool updateAvailable;
@@ -54,39 +54,39 @@ class RepoData {
     try {
       //did not get a reuseRepo passed in, so we're getting a new one
       if (reuseRepo == null) {
-        repo = await getRepository(repoSlug, setState: setState);
+        _repo = await getRepository(repoSlug, setState: setState);
       } else {
-        repo = reuseRepo;
+        _repo = reuseRepo;
       }
 
-      if (repo == null) {
+      if (_repo == null) {
         //Don't reset values if there is no repo to get the values from
         throw RepositoryNotFound;
       }
 
       setState!(() {
-        url = Uri.parse(repo?.htmlUrl ?? url.toString());
-        prettyName = namePrettier(repo?.name ?? repoSlug.name);
-        ownerName = repo?.owner?.login ?? repoSlug.owner;
+        url = Uri.parse(_repo?.htmlUrl ?? url.toString());
+        prettyName = namePrettier(_repo?.name ?? repoSlug.name);
+        ownerName = _repo?.owner?.login ?? repoSlug.owner;
 
-        iconUrl = Uri.parse(repo?.owner?.avatarUrl ?? "");
-        description = repo?.description ?? "";
+        iconUrl = Uri.parse(_repo?.owner?.avatarUrl ?? "");
+        description = _repo?.description ?? "";
       });
 
       try {
-        release = await getLatestRelease(repoSlug, setState: setState);
+        _release = await getLatestRelease(repoSlug, setState: setState);
 
-        if (release == null) {
+        if (_release == null) {
           throw ReleaseNotFound;
         }
 
-        releaseTag = release?.tagName ?? noReleaseNotes;
-        releaseTitle = release?.name ?? releaseNotes;
-        releaseMarkdown = release?.body ?? noReleaseNotes;
+        releaseTag = _release?.tagName ?? noReleaseNotes;
+        releaseTitle = _release?.name ?? releaseNotes;
+        releaseMarkdown = _release?.body ?? noReleaseNotes;
 
         // Apk Assets -->
         releaseApkAssets.clear();
-        release?.assets?.forEach((ReleaseAsset asset) {
+        _release?.assets?.forEach((ReleaseAsset asset) {
           if (asset.name!.endsWith(".apk")) {
             releaseApkAssets.add(ReleaseAPK(
               name: asset.name ?? "",
