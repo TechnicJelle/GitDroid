@@ -8,6 +8,8 @@ import 'globals.dart';
 import 'repo_item.dart';
 
 void showRelease(BuildContext context, RepoItem widget) {
+  ScrollController scrollController = ScrollController(); //needed for the scrollbar in the assets list
+
   showDialog(
     context: context,
     builder: (context) {
@@ -67,29 +69,43 @@ void showRelease(BuildContext context, RepoItem widget) {
                     : const Text(downloads),
               ),
               Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: widget.data.releaseApkAssets.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(widget.data.releaseApkAssets[index].name),
-                      trailing: Opacity(
-                        opacity: 0.7,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(filesize(widget.data.releaseApkAssets[index].size)),
-                            const SizedBox(width: 24),
-                            Text(NumberFormat.compact().format(widget.data.releaseApkAssets[index].downloadCount)),
-                            const Icon(Icons.file_download),
-                          ],
+                child: Scrollbar(
+                  controller: scrollController,
+                  thumbVisibility: true, //always show the scrollbar, to hint that there are more items in the list than currently in view
+                  child: ListView.separated(
+                    controller: scrollController,
+                    shrinkWrap: true,
+                    itemCount: widget.data.releaseApkAssets.length,
+                    separatorBuilder: (context, index) => const Divider(height: 0),
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(widget.data.releaseApkAssets[index].name),
+                        trailing: Opacity(
+                          opacity: 0.7,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(filesize(widget.data.releaseApkAssets[index].size)),
+                              Text.rich(
+                                TextSpan(
+                                  children: <InlineSpan>[
+                                    TextSpan(text: NumberFormat.compact().format(widget.data.releaseApkAssets[index].downloadCount)),
+                                    const WidgetSpan(
+                                      child: Icon(Icons.download),
+                                      alignment: PlaceholderAlignment.middle,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
