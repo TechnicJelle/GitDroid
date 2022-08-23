@@ -1,14 +1,87 @@
+import 'dart:io';
+
+import 'package:another_flushbar/flushbar.dart';
+import 'package:dio/dio.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'globals.dart';
 import 'repo_item.dart';
 
 void showRelease(BuildContext context, RepoItem widget) {
   ScrollController scrollController = ScrollController(); //needed for the scrollbar in the assets list
+
+  void downloadAPK(String url, String name) async {
+    //Get download location in file system
+    Directory tempDir = await getTemporaryDirectory();
+    File apkFileInCacheDir = File("${tempDir.path}/$name");
+
+    //If the file hasn't already been downloaded, then download it
+    if (!apkFileInCacheDir.existsSync()) {
+      try {
+        Flushbar flushbar = Flushbar(
+          title: "Downloading", //TODO (low-prio): Global string
+          message: name,
+          icon: const Icon(Icons.file_download, color: Colors.blue),
+          flushbarPosition: FlushbarPosition.TOP,
+          showProgressIndicator: true,
+          isDismissible: false,
+          shouldIconPulse: true,
+        );
+        flushbar.show(GlobalContext.key.currentContext!);
+        await Dio().download(
+          url,
+          apkFileInCacheDir.path,
+        );
+        flushbar.dismiss();
+      } catch (e) {
+        Flushbar(
+          title: "Download failed", //TODO (low-prio): Global string
+          message: e.toString(),
+          duration: const Duration(seconds: 10),
+          flushbarPosition: FlushbarPosition.BOTTOM,
+          isDismissible: true,
+        ).show(GlobalContext.key.currentContext!);
+      }
+    }
+
+    //And install the file
+
+    // === OPTION ONE ===
+    OpenFile.open(apkFileInCacheDir.path); //TODO (low-prio): Replace this with a custom Intent thing, using android_intent_plus
+
+    // === OPTION TWO ===
+    // try {
+    //   //open the file in the android app
+    //   AndroidIntent intent = AndroidIntent(
+    //     action: "action_view",
+    //     data: Uri.encodeFull(apkFileInCacheDir.path),
+    //     type: "application/vnd.android.package-archive",
+    //     flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+    //   );
+    //   await intent.launch();
+    // } catch (e) {
+    //   print("Failed to open file.\n\n$e");
+    // }
+
+    // === OPTION THREE ===
+    // try {
+    //   AndroidIntent intent = AndroidIntent(
+    //     action: "ACTION_INSTALL_PACKAGE",
+    //     data: Uri.encodeFull(apkFileInCacheDir.path),
+    //     type: "application/vnd.android.package-archive",
+    //     flags: <int>[Flag.FLAG_GRANT_READ_URI_PERMISSION],
+    //   );
+    //   await intent.launch();
+    // } catch (e) {
+    //   print("Failed to open file.\n\n$e");
+    // }
+  }
 
   showDialog(
     context: context,
@@ -101,6 +174,7 @@ void showRelease(BuildContext context, RepoItem widget) {
                           ),
                         ),
                         onTap: () {
+                          downloadAPK(widget.data.releaseApkAssets[index].browserDownloadUrl, widget.data.releaseApkAssets[index].name);
                           Navigator.pop(context);
                         },
                       );
