@@ -2,4 +2,4 @@
 
 An app store for apps uploaded to GitHub releases
 
-![Animated GIF displaying how the app works](.github/readme_assets/Installing Sky Map.gif)
+![Animated GIF displaying how the app works](.github/readme_assets/Installing%20Sky%20Map.gif)
