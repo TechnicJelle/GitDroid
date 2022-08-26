@@ -29,34 +29,23 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   List<RepoData> repos = [];
 
   Future<void> saveRepos() async {
-    print("Saving repos");
     Directory saveDir = await getApplicationDocumentsDirectory();
-    print(saveDir.path);
     File saveFile = File("${saveDir.path}/repos.json");
-    print(saveFile.path);
     List<String> repoStrings = repos.map((repo) => repo.repoSlug.toString()).toList();
     await saveFile.writeAsString(json.encode(repoStrings), mode: FileMode.write, flush: true);
-    print("Saved repos");
   }
 
   Future<void> loadRepos() async {
-    print("Loading repos");
     Directory saveDir = await getApplicationDocumentsDirectory();
-    print(saveDir.path);
     File saveFile = File("${saveDir.path}/repos.json");
-    print(saveFile.path);
     if (await saveFile.exists()) {
       String repoStrings = await saveFile.readAsString();
-      print(repoStrings);
       List<dynamic> repoStringsList = json.decode(repoStrings);
-      print(repoStringsList.runtimeType);
       List<RepoData> repoList = [];
       for (String repoString in repoStringsList) {
-        print(repoString);
         String owner = repoString.split("/")[0];
         String name = repoString.split("/")[1];
         RepositorySlug repoSlug = RepositorySlug(owner, name);
-        print(repoSlug.toString());
         repoList.add(RepoData(repoSlug));
       }
       setState(() {
@@ -66,7 +55,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     } else {
       addRepoToList("TechnicJelle", "GitDroid");
     }
-    print("Loaded repos");
   }
 
   @override
@@ -97,24 +85,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     RepositorySlug repoSlug = RepositorySlug(owner, name);
     RepoData repoData = RepoData(repoSlug);
     try {
-      print("1");
       Repository? repo = await getRepository(repoSlug, setState: setState);
-      print("2");
       //if didn't trigger an error, add repo to list
       repos.add(repoData);
       repoData.checkUpdate(setState: setState, reuseRepo: repo);
-      print("3");
     } catch (e) {
-      print("4  Error: $e");
       if (e.toString().contains(errorAPILimit)) {
-        print("5");
         //API limit reached, just adding repo to list without checking it
         setState(() {
-          print(repoData.repoSlug.toString());
           repos.add(repoData);
-          print("6");
         });
-        return;
       }
       rethrow;
     }
@@ -144,13 +124,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         //if the url is valid
         if (errorMessage == null) {
           await addRepoToList(input[0], input[1]);
-          print("7");
 
           //close the dialog
           if (!mounted) return;
-          print("8");
           Navigator.of(context).pop();
-          print("9");
         }
       } catch (e) {
         //the repo didn't exist
@@ -158,6 +135,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         setDialogState(() {
           if (e is RepositoryNotFound) {
             errorMessage = repoDoesNotExist;
+          } else if (e.toString().contains(errorAPILimit)) {
+            errorMessage = "$errorAPILimit, but added the repo anyway.\nYou can close this dialog if you'd like.";
           } else {
             errorMessage = "Error: ${e.toString()}"; //hopefully this will never happen
           }
