@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:github/github.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'globals.dart';
 import 'repo_data.dart';
@@ -21,18 +25,71 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   List<RepoData> repos = [];
+
+  Future<void> saveRepos() async {
+    print("Saving repos");
+    Directory saveDir = await getApplicationDocumentsDirectory();
+    print(saveDir.path);
+    File saveFile = File("${saveDir.path}/repos.json");
+    print(saveFile.path);
+    List<String> repoStrings = repos.map((repo) => repo.repoSlug.toString()).toList();
+    await saveFile.writeAsString(json.encode(repoStrings), mode: FileMode.write, flush: true);
+    print("Saved repos");
+  }
+
+  Future<void> loadRepos() async {
+    print("Loading repos");
+    Directory saveDir = await getApplicationDocumentsDirectory();
+    print(saveDir.path);
+    File saveFile = File("${saveDir.path}/repos.json");
+    print(saveFile.path);
+    if (await saveFile.exists()) {
+      String repoStrings = await saveFile.readAsString();
+      print(repoStrings);
+      List<dynamic> repoStringsList = json.decode(repoStrings);
+      print(repoStringsList.runtimeType);
+      List<RepoData> repoList = [];
+      for (String repoString in repoStringsList) {
+        print(repoString);
+        String owner = repoString.split("/")[0];
+        String name = repoString.split("/")[1];
+        RepositorySlug repoSlug = RepositorySlug(owner, name);
+        print(repoSlug.toString());
+        repoList.add(RepoData(repoSlug));
+      }
+      setState(() {
+        repos = repoList;
+      });
+      refreshList();
+    } else {
+      addRepoToList("TechnicJelle", "GitDroid");
+    }
+    print("Loaded repos");
+  }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
-    //TODO (med-prio): Load repos from app data
+    loadRepos();
+  }
 
-    //TODO (low-prio): Make this only happen once, on first launch
-    if (repos.isEmpty) {
-      addRepoToList("TechnicJelle", "GitDroid");
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.paused) {
+      saveRepos();
     }
   }
 
@@ -40,15 +97,22 @@ class _MyHomePageState extends State<MyHomePage> {
     RepositorySlug repoSlug = RepositorySlug(owner, name);
     RepoData repoData = RepoData(repoSlug);
     try {
+      print("1");
       Repository? repo = await getRepository(repoSlug, setState: setState);
+      print("2");
       //if didn't trigger an error, add repo to list
       repos.add(repoData);
       repoData.checkUpdate(setState: setState, reuseRepo: repo);
+      print("3");
     } catch (e) {
+      print("4  Error: $e");
       if (e.toString().contains(errorAPILimit)) {
+        print("5");
         //API limit reached, just adding repo to list without checking it
         setState(() {
+          print(repoData.repoSlug.toString());
           repos.add(repoData);
+          print("6");
         });
         return;
       }
@@ -80,10 +144,13 @@ class _MyHomePageState extends State<MyHomePage> {
         //if the url is valid
         if (errorMessage == null) {
           await addRepoToList(input[0], input[1]);
+          print("7");
 
           //close the dialog
           if (!mounted) return;
+          print("8");
           Navigator.of(context).pop();
+          print("9");
         }
       } catch (e) {
         //the repo didn't exist
@@ -211,7 +278,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> _pullRefresh() async {
+  Future<void> refreshList() async {
     for (RepoData repo in repos) {
       repo.checkUpdate(setState: setState);
     }
@@ -258,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
       body: RefreshIndicator(
-        onRefresh: _pullRefresh,
+        onRefresh: refreshList,
         child: ListView.separated(
           itemCount: repos.length,
           separatorBuilder: (context, index) => const Divider(height: 0),
