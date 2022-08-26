@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 GitHub github = GitHub();
 int? remainingApiCalls;
 const String errorAPILimit = "API rate limit exceeded";
+bool shownFlushbar = false;
 
 const String invalidGitHubURL = "Not a GitHub Repository";
 const String cannotBeEmpty = "Cannot be empty";
@@ -91,26 +92,35 @@ bool canCallApi() {
 void outOfApiCallsWarning() {
   if (github.rateLimitReset != null) {
     Duration timeLeft = Duration(milliseconds: diff());
-    Flushbar(
-      //TODO (high-prio): make global const
-      title: apiWarning,
-      message: "Try again in ${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")} minutes"
-          "\nYou can use an API key to increase the number of API calls you can make per hour.", //TODO (low-prio): Shorten this text (move it into the dialog)
-      icon: const Icon(
-        Icons.timelapse_rounded,
-        size: 28.0,
-        color: Colors.orange,
-      ),
-      duration: const Duration(seconds: 7), //TODO (low-prio): This is too long, but it's just enough for people to read the whole text, so reduce this
-      flushbarPosition: FlushbarPosition.TOP,
-      animationDuration: const Duration(milliseconds: 300),
-      mainButton: ElevatedButton(
-        onPressed: () {
-          apiDialog();
+    if (!shownFlushbar) {
+      shownFlushbar = true;
+      Flushbar(
+        //TODO (high-prio): make global const
+        title: apiWarning,
+        message: "Try again in ${(timeLeft.inMinutes % 60).toString().padLeft(2, "0")} minutes"
+            "\nYou can use an API key to increase the number of API calls you can make per hour.", //TODO (low-prio): Shorten this text (move it into the dialog)
+        icon: const Icon(
+          Icons.timelapse_rounded,
+          size: 28.0,
+          color: Colors.orange,
+        ),
+        duration: const Duration(seconds: 7), //TODO (low-prio): This is too long, but it's just enough for people to read the whole text, so reduce this
+        flushbarPosition: FlushbarPosition.TOP,
+        animationDuration: const Duration(milliseconds: 300),
+        mainButton: ElevatedButton(
+          onPressed: () {
+            apiDialog();
+          },
+          child: const Text("API Key"), //TODO (high-prio): make global const
+        ),
+        isDismissible: false,
+        onStatusChanged: (status) {
+          if (status == FlushbarStatus.IS_HIDING) {
+            shownFlushbar = false;
+          }
         },
-        child: const Text("API Key"), //TODO (high-prio): make global const
-      ),
-    ).show(GlobalContext.key.currentContext!);
+      ).show(GlobalContext.key.currentContext!);
+    }
   }
 }
 
