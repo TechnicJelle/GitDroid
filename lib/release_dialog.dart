@@ -14,7 +14,8 @@ import 'globals.dart';
 import 'repo_item.dart';
 
 void showRelease(BuildContext context, RepoItem widget) {
-  ScrollController scrollController = ScrollController(); //needed for the scrollbar in the assets list
+  //needed for the scrollbar in the assets list
+  ScrollController scrollController = ScrollController();
 
   void downloadAPK(String url, String name) async {
     //Get download location in file system
@@ -25,7 +26,8 @@ void showRelease(BuildContext context, RepoItem widget) {
     if (!apkFileInCacheDir.existsSync()) {
       try {
         Flushbar flushbar = Flushbar(
-          title: "Downloading", //TODO (low-prio): Global string
+          //TODO (low-prio): Global string:
+          title: "Downloading",
           message: name,
           icon: const Icon(Icons.file_download, color: Colors.blue),
           flushbarPosition: FlushbarPosition.TOP,
@@ -41,7 +43,8 @@ void showRelease(BuildContext context, RepoItem widget) {
         flushbar.dismiss();
       } catch (e) {
         Flushbar(
-          title: "Download failed", //TODO (low-prio): Global string
+          title: "Download failed",
+          //TODO (low-prio): Global string
           message: e.toString(),
           duration: const Duration(seconds: 10),
           flushbarPosition: FlushbarPosition.BOTTOM,
@@ -53,7 +56,8 @@ void showRelease(BuildContext context, RepoItem widget) {
     //And install the file
 
     // === OPTION ONE ===
-    OpenFile.open(apkFileInCacheDir.path); //TODO (low-prio): Replace this with a custom Intent thing, using android_intent_plus
+    //TODO (low-prio): Replace this with a custom Intent thing, using android_intent_plus
+    OpenFile.open(apkFileInCacheDir.path);
 
     // === OPTION TWO ===
     // try {
@@ -93,7 +97,13 @@ void showRelease(BuildContext context, RepoItem widget) {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.data.releaseTitle, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+              Text(
+                widget.data.releaseTitle,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               Flexible(
                 child: SingleChildScrollView(
@@ -109,18 +119,23 @@ void showRelease(BuildContext context, RepoItem widget) {
                       margin: const EdgeInsets.all(8),
                       child: Stack(
                         children: [
-                          const Divider(height: 0, color: Colors.transparent), //just there to make the MarkdownBody the full width of the dialog
+                          //just there to make the MarkdownBody the full width of the dialog:
+                          const Divider(height: 0, color: Colors.transparent),
                           MarkdownBody(
                             data: widget.data.releaseMarkdown,
                             selectable: true,
-                            extensionSet: md.ExtensionSet(md.ExtensionSet.gitHubWeb.blockSyntaxes, md.ExtensionSet.gitHubWeb.inlineSyntaxes),
+                            extensionSet: md.ExtensionSet(
+                              md.ExtensionSet.gitHubWeb.blockSyntaxes,
+                              md.ExtensionSet.gitHubWeb.inlineSyntaxes,
+                            ),
                             softLineBreak: true,
                             imageBuilder: (uri, title, alt) {
                               return Image.network(
                                 uri.toString(),
                                 //I tried making it load the image as an SVG, but it didn't work,
                                 // so I guess some images just won't be able to load.
-                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.broken_image_rounded),
                               );
                             },
                             onTapLink: launchURL,
@@ -135,21 +150,27 @@ void showRelease(BuildContext context, RepoItem widget) {
               DefaultTextStyle(
                 style: TextStyle(
                   fontSize: 20,
-                  color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
                 ),
-                child: widget.data.releaseApkAssets.isEmpty //if there are no apk assets, don't show the download button
+                //if there are no apk assets, don't show the download button
+                child: widget.data.releaseApkAssets.isEmpty
                     ? const Text(noDownloads)
                     : const Text(downloads),
               ),
               Flexible(
                 child: Scrollbar(
                   controller: scrollController,
-                  thumbVisibility: true, //always show the scrollbar, to hint that there are more items in the list than currently in view
+                  //always show the scrollbar, to hint that there are more items in the list than currently in view
+                  thumbVisibility: true,
                   child: ListView.separated(
                     controller: scrollController,
                     shrinkWrap: true,
                     itemCount: widget.data.releaseApkAssets.length,
-                    separatorBuilder: (context, index) => const Divider(height: 0),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 0),
                     itemBuilder: (context, index) {
                       return ListTile(
                         title: Text(widget.data.releaseApkAssets[index].name),
@@ -158,11 +179,20 @@ void showRelease(BuildContext context, RepoItem widget) {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(filesize(widget.data.releaseApkAssets[index].size)),
+                              Text(
+                                filesize(
+                                  widget.data.releaseApkAssets[index].size,
+                                ),
+                              ),
                               Text.rich(
                                 TextSpan(
                                   children: <InlineSpan>[
-                                    TextSpan(text: NumberFormat.compact().format(widget.data.releaseApkAssets[index].downloadCount)),
+                                    TextSpan(
+                                      text: NumberFormat.compact().format(
+                                        widget.data.releaseApkAssets[index]
+                                            .downloadCount,
+                                      ),
+                                    ),
                                     const WidgetSpan(
                                       child: Icon(Icons.download),
                                       alignment: PlaceholderAlignment.middle,
@@ -174,7 +204,11 @@ void showRelease(BuildContext context, RepoItem widget) {
                           ),
                         ),
                         onTap: () {
-                          downloadAPK(widget.data.releaseApkAssets[index].browserDownloadUrl, widget.data.releaseApkAssets[index].name);
+                          downloadAPK(
+                            widget.data.releaseApkAssets[index]
+                                .browserDownloadUrl,
+                            widget.data.releaseApkAssets[index].name,
+                          );
                           Navigator.pop(context);
                         },
                       );

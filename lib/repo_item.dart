@@ -31,7 +31,8 @@ class _RepoItemState extends State<RepoItem> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5),
             child: Image.network(
-              widget.data.iconUrl.toString(), //if url is wrong, it'll error, making the errorBuilder activate instead, to load a fallback GitHub image
+              //if url is wrong, it'll error, making the errorBuilder activate instead, to load a fallback GitHub image
+              widget.data.iconUrl.toString(),
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return const CircularProgressIndicator();
@@ -46,8 +47,11 @@ class _RepoItemState extends State<RepoItem> {
         Expanded(
           child: DefaultTextStyle(
             style: TextStyle(
-              color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
-              overflow: widget.data.expanded ? TextOverflow.visible : TextOverflow.fade,
+              //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+              overflow: widget.data.expanded
+                  ? TextOverflow.visible
+                  : TextOverflow.fade,
             ),
             softWrap: widget.data.expanded,
             child: Column(
@@ -55,13 +59,18 @@ class _RepoItemState extends State<RepoItem> {
               children: [
                 Text(
                   widget.data.prettyName,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 GestureDetector(
                   onLongPress: widget.data.expanded
                       ? () async => {
-                            await Clipboard.setData(ClipboardData(text: widget.data.url.toString())),
+                            await Clipboard.setData(
+                              ClipboardData(text: widget.data.url.toString()),
+                            ),
                             Flushbar(
                               message: copiedURLToClipboard,
                               icon: const Icon(
@@ -71,13 +80,20 @@ class _RepoItemState extends State<RepoItem> {
                               ),
                               duration: const Duration(seconds: 3),
                               flushbarPosition: FlushbarPosition.TOP,
-                              animationDuration: const Duration(milliseconds: 300),
+                              animationDuration: const Duration(
+                                milliseconds: 300,
+                              ),
                             )..show(context),
                           }
                       : null,
                   child: Text(
-                    widget.data.expanded ? widget.data.url.toString() : widget.data.ownerName,
-                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                    widget.data.expanded
+                        ? widget.data.url.toString()
+                        : widget.data.ownerName,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
                 widget.data.expanded
@@ -102,9 +118,10 @@ class _RepoItemState extends State<RepoItem> {
                 onPressed: () {
                   showRelease(context, widget);
                 },
+                //just here so it doesn't pop the delete dialog when the button is long pressed:
                 onLongPress: () {
                   launchURL("", widget.data.releasesUrl.toString(), "");
-                }, //just here so it doesn't pop the delete dialog when the button is long pressed
+                },
                 child: Text(widget.data.releaseTag ?? ""),
               )
             : OutlinedButton(
@@ -113,13 +130,21 @@ class _RepoItemState extends State<RepoItem> {
                     : () {
                         showRelease(context, widget);
                       },
+                //just here so it doesn't pop the delete dialog when the button is long pressed:
                 onLongPress: () {
                   launchURL("", widget.data.releasesUrl.toString(), "");
-                }, //just here so it doesn't pop the delete dialog when the button is long pressed
+                },
                 child: DefaultTextStyle(
                   //muted colour:
-                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color), //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
-                  child: widget.data.releaseTag == null ? const Text(noReleases) : Text(widget.data.releaseTag ?? "this cannot ever happen"),
+                  //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                  child: widget.data.releaseTag == null
+                      ? const Text(noReleases)
+                      : Text(
+                          widget.data.releaseTag ?? "this cannot ever happen",
+                        ),
                 ),
               ),
       ],

@@ -31,8 +31,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Future<void> saveRepos() async {
     Directory saveDir = await getApplicationDocumentsDirectory();
     File saveFile = File("${saveDir.path}/repos.json");
-    List<String> repoStrings = repos.map((repo) => repo.repoSlug.toString()).toList();
-    await saveFile.writeAsString(json.encode(repoStrings), mode: FileMode.write, flush: true);
+
+    List<String> repoStrings =
+        repos.map((repo) => repo.repoSlug.toString()).toList();
+
+    await saveFile.writeAsString(
+      json.encode(repoStrings),
+      mode: FileMode.write,
+      flush: true,
+    );
   }
 
   Future<void> loadRepos() async {
@@ -102,14 +109,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void _addListItem() {
     TextEditingController textEditingController = TextEditingController();
-    // ignore: avoid_init_to_null
-    String? errorMessage = null; //starts off being valid, to not immediately show the red warning
-    Key key = UniqueKey(); //create a unique key for the text field (used by the shaker)
-    bool justShook = false; //used to prevent the shaker from clearing the error message if the repo didn't exist
+    //starts off being valid, to not immediately show the red warning
+    String? errorMessage;
+    //create a unique key for the text field (used by the shaker)
+    Key key = UniqueKey();
+    //used to prevent the shaker from clearing the error message if the repo didn't exist
+    bool justShook = false;
 
     void validate(List<String> parts) {
       errorMessage = parts.length != 2 ? invalidGitHubURL : null;
-      if (textEditingController.text == "") errorMessage = cannotBeEmpty; //when the user presses Enter with no text, the dialog is not valid
+      if (textEditingController.text == "") {
+        //when the user presses Enter with no text, the dialog is not valid
+        errorMessage = cannotBeEmpty;
+      }
     }
 
     Future<void> attemptAdd(StateSetter setDialogState) async {
@@ -136,9 +148,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           if (e is RepositoryNotFound) {
             errorMessage = repoDoesNotExist;
           } else if (e.toString().contains(errorAPILimit)) {
-            errorMessage = "$errorAPILimit, but added the repo anyway.\nYou can close this dialog if you'd like.";
+            errorMessage = "$errorAPILimit, but added the repo anyway.\n"
+                "You can close this dialog if you'd like.";
           } else {
-            errorMessage = "Error: ${e.toString()}"; //hopefully this will never happen
+            //hopefully this will never happen
+            errorMessage = "Error: ${e.toString()}";
           }
         });
       }
@@ -162,7 +176,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 width: 600,
                 child: ShakeWidget(
                   key: key,
-                  duration: Duration(milliseconds: errorMessage == null ? 0 : 500),
+                  duration: Duration(
+                    milliseconds: errorMessage == null ? 0 : 500,
+                  ),
                   child: TextField(
                     controller: textEditingController,
                     style: const TextStyle(fontSize: 18),
@@ -226,12 +242,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             text: TextSpan(
               style: TextStyle(
                 fontSize: 18,
-                color: Theme.of(context).textTheme.bodyText1?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.color, //TODO (low-prio): Find a better solution for this (it fixes the dark/light theme)
               ),
               children: <TextSpan>[
                 const TextSpan(text: areYouSureDelete),
-                TextSpan(text: "${repos[index].prettyName}?", style: const TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: "\n\n${repos[index].url.toString()}", style: const TextStyle(fontStyle: FontStyle.italic)),
+                TextSpan(
+                  text: "${repos[index].prettyName}?",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: "\n\n${repos[index].url.toString()}",
+                  style: const TextStyle(fontStyle: FontStyle.italic),
+                ),
               ],
             ),
           ),
@@ -277,15 +302,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called
-
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: const Text("Git-Droid"),
         actions: [
           IconButton(
@@ -293,7 +311,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               updateApiCalls(setState);
               apiDialog();
             },
-            icon: Text(remainingApiCalls == null ? "" : remainingApiCalls.toString()),
+            icon: Text(
+              remainingApiCalls == null ? "" : remainingApiCalls.toString(),
+            ),
             tooltip: apiCallsRemainingDesc,
           )
         ],
@@ -302,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         onPressed: _addListItem,
         tooltip: addFabTooltip,
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
       body: RefreshIndicator(
         onRefresh: refreshList,
         child: ListView.separated(
@@ -314,7 +334,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               repos[index].expand();
             }),
             onLongPress: () => _onLongPress(index),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
           ),
         ),
       ),

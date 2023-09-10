@@ -32,14 +32,14 @@ dependencies:
 
 
   flutter_markdown: ^0.6.10+3
-  intl: ^0.17.0
-  markdown: ^5.0.0
+  intl: ^0.18.1
+  markdown: ^7.1.1
   filesize: ^2.0.1
   url_launcher: ^6.1.5
   github: ^9.4.0
   another_flushbar: ^1.10.29
   path_provider: ^2.0.11
-  dio: ^4.0.0
+  dio: ^5.3.2
   open_file: ^3.2.1
 
 dev_dependencies:
